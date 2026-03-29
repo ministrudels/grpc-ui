@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "main": "dist/main/main.js",
   "scripts": {
-    "dev": "concurrently -k -n vite,electron \"vite\" \"wait-on tcp:5173 && tsc -p tsconfig.main.json && cp -r src/proto dist/proto && electron .\"",
-    "build": "vite build && tsc -p tsconfig.main.json && cp -r src/proto dist/proto",
+    "dev": "concurrently -k -n vite,electron \"vite\" \"wait-on tcp:5173 && tsc -p tsconfig.main.json && electron .\"",
+    "build": "vite build && tsc -p tsconfig.main.json && rm -rf dist/proto && cp -r src/proto dist/proto",
     "start": "npm run build && electron .",
     "test": "vitest run"
   },

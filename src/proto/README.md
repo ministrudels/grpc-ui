@@ -6,21 +6,24 @@ what it returns back.
 
 ---
 
-## reflection.proto
+## reflection_v1alpha.proto and reflection_v1.proto
 
-**What it is:** The schema for the gRPC Server Reflection service
-(`grpc.reflection.v1alpha.ServerReflection`).
+**What they are:** The schema for the gRPC Server Reflection service. Two versions
+exist (`grpc.reflection.v1alpha` and `grpc.reflection.v1`) with identical message
+structures — only the package name and therefore the RPC path differs.
 
-**Why it's necessary:** Server reflection is itself a gRPC service. Like any gRPC
+**Why they're necessary:** Server reflection is itself a gRPC service. Like any gRPC
 service, you must know how to serialise its requests and deserialise its responses
 before you can call it. There is no way to bootstrap around this — you cannot use
 reflection to discover reflection's own schema.
 
-This file is identical across every gRPC server that supports reflection; it is
-part of the official gRPC specification. Our copy is a verbatim subset of the
-canonical source:
+**Why two versions:** The v1alpha version was the original; many newer servers
+(notably grpc-go since v1.45) only expose v1. The client tries v1alpha first and
+falls back to v1 on `UNIMPLEMENTED`. Both are part of the official gRPC
+specification:
 
 > https://github.com/grpc/grpc/blob/master/src/proto/grpc/reflection/v1alpha/reflection.proto
+> https://github.com/grpc/grpc/blob/master/src/proto/grpc/reflection/v1/reflection.proto
 
 We omit the `ExtensionRequest` / `all_extension_numbers_*` fields as we do not
 use extension-based reflection.

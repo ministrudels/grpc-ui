@@ -10,10 +10,13 @@ import path from "path";
 // and Vitest running source directly (src/ -> proto = src/proto/), so we probe both.
 function findProtoDir(): string {
   const candidates = [
-    path.join(__dirname, "../proto"), // compiled: dist/main/ → dist/proto/
-    path.join(__dirname, "proto"),    // source:   src/       → src/proto/
+    path.join(__dirname, "../proto"),        // production build: dist/main/ → dist/proto/
+    path.join(__dirname, "../../src/proto"), // dev: dist/main/ → src/proto/
+    path.join(__dirname, "proto"),           // vitest: src/ → src/proto/
   ];
-  const found = candidates.find((dir) => fs.existsSync(dir));
+  const found = candidates.find((dir) =>
+    fs.existsSync(path.join(dir, "reflection_v1alpha.proto"))
+  );
   if (!found) {
     throw new Error(`Proto directory not found. Searched: ${candidates.join(", ")}`);
   }
@@ -42,45 +45,46 @@ export interface Collection {
   services: GrpcService[];
 }
 
-// ── Module-level singletons (parsed once) ────────────────────────────────────
+// ── Build a versioned reflection client constructor ───────────────────────────
+// Both v1 and v1alpha have identical message structures — only the package
+// name (and therefore the RPC path) differs.
 
-const reflectionRoot = protobuf.loadSync(
-  path.join(PROTO_DIR, "reflection.proto")
-);
-const ReqType = reflectionRoot.lookupType(
-  "grpc.reflection.v1alpha.ServerReflectionRequest"
-);
-const ResType = reflectionRoot.lookupType(
-  "grpc.reflection.v1alpha.ServerReflectionResponse"
-);
+function makeReflectionClientCtor(protoFile: string, pkg: string) {
+  const root = protobuf.loadSync(path.join(PROTO_DIR, protoFile));
+  const ReqType = root.lookupType(`${pkg}.ServerReflectionRequest`);
+  const ResType = root.lookupType(`${pkg}.ServerReflectionResponse`);
 
-const descriptorRoot = protobuf.loadSync(
-  path.join(PROTO_DIR, "descriptor.proto")
-);
-const FileDescriptorProtoType = descriptorRoot.lookupType(
-  "google.protobuf.FileDescriptorProto"
-);
-
-const ReflectionClientCtor = grpc.makeClientConstructor(
-  {
-    ServerReflectionInfo: {
-      path: "/grpc.reflection.v1alpha.ServerReflection/ServerReflectionInfo",
-      requestStream: true,
-      responseStream: true,
-      requestSerialize: (req: object) =>
-        Buffer.from(ReqType.encode(ReqType.fromObject(req)).finish()),
-      requestDeserialize: (buf: Buffer) =>
-        ReqType.toObject(ReqType.decode(buf), { defaults: true, arrays: true }),
-      responseSerialize: (res: object) =>
-        Buffer.from(ResType.encode(ResType.fromObject(res)).finish()),
-      responseDeserialize: (buf: Buffer) =>
-        ResType.toObject(ResType.decode(buf), { defaults: true, arrays: true }),
+  return grpc.makeClientConstructor(
+    {
+      ServerReflectionInfo: {
+        path: `/${pkg}.ServerReflection/ServerReflectionInfo`,
+        requestStream: true,
+        responseStream: true,
+        requestSerialize: (req: object) =>
+          Buffer.from(ReqType.encode(ReqType.fromObject(req)).finish()),
+        requestDeserialize: (buf: Buffer) =>
+          ReqType.toObject(ReqType.decode(buf), { defaults: true, arrays: true }),
+        responseSerialize: (res: object) =>
+          Buffer.from(ResType.encode(ResType.fromObject(res)).finish()),
+        responseDeserialize: (buf: Buffer) =>
+          ResType.toObject(ResType.decode(buf), { defaults: true, arrays: true }),
+      },
     },
-  },
-  "ServerReflection"
-);
+    "ServerReflection"
+  );
+}
 
-// ── FileDescriptorProto parsing ──────────────────────────────────────────────
+// Initialised once at module load time.
+// v1alpha is tried first; v1 is the fallback (see discoverServices).
+const ClientCtors = {
+  v1alpha: makeReflectionClientCtor("reflection_v1alpha.proto", "grpc.reflection.v1alpha"),
+  v1:      makeReflectionClientCtor("reflection_v1.proto",      "grpc.reflection.v1"),
+};
+
+// ── FileDescriptorProto parsing ───────────────────────────────────────────────
+
+const descriptorRoot = protobuf.loadSync(path.join(PROTO_DIR, "descriptor.proto"));
+const FileDescriptorProtoType = descriptorRoot.lookupType("google.protobuf.FileDescriptorProto");
 
 interface RawFileDescriptor {
   name?: string;
@@ -97,10 +101,7 @@ interface RawFileDescriptor {
   }>;
 }
 
-function parseFileDescriptor(
-  bytes: Buffer,
-  seenFiles: Set<string>
-): GrpcService[] {
+function parseFileDescriptor(bytes: Buffer, seenFiles: Set<string>): GrpcService[] {
   const fd = FileDescriptorProtoType.toObject(
     FileDescriptorProtoType.decode(bytes),
     { defaults: true, arrays: true }
@@ -123,13 +124,13 @@ function parseFileDescriptor(
   }));
 }
 
-// ── Main exported function ───────────────────────────────────────────────────
+// ── Core reflection logic ─────────────────────────────────────────────────────
 
-export function discoverServices(url: string): Promise<Collection> {
-  const client = new ReflectionClientCtor(
-    url,
-    grpc.credentials.createInsecure()
-  );
+function runReflection(
+  url: string,
+  ClientCtor: grpc.ServiceClientConstructor
+): Promise<Collection> {
+  const client = new ClientCtor(url, grpc.credentials.createInsecure());
 
   return new Promise((resolve, reject) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -157,7 +158,6 @@ export function discoverServices(url: string): Promise<Collection> {
           response.listServicesResponse.service as Array<{ name: string }>
         )
           .map((s) => s.name)
-          // Filter out the reflection service itself
           .filter((n: string) => !n.startsWith("grpc.reflection."));
 
         listDone = true;
@@ -197,7 +197,21 @@ export function discoverServices(url: string): Promise<Collection> {
       reject(err);
     });
 
-    // Kick off discovery
     call.write({ listServices: "" });
   });
+}
+
+// ── Main exported function ────────────────────────────────────────────────────
+
+export async function discoverServices(url: string): Promise<Collection> {
+  try {
+    return await runReflection(url, ClientCtors.v1alpha);
+  } catch (err: unknown) {
+    // UNIMPLEMENTED (code 12) means the server doesn't support v1alpha —
+    // many modern servers (e.g. grpc-go) only expose the v1 endpoint.
+    if ((err as { code?: number }).code === grpc.status.UNIMPLEMENTED) {
+      return runReflection(url, ClientCtors.v1);
+    }
+    throw err;
+  }
 }
