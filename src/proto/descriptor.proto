@@ -1,0 +1,21 @@
+syntax = "proto2";
+package google.protobuf;
+
+message FileDescriptorProto {
+  optional string name    = 1;
+  optional string package = 2;
+  repeated ServiceDescriptorProto service = 6;
+}
+
+message ServiceDescriptorProto {
+  optional string name = 1;
+  repeated MethodDescriptorProto method = 2;
+}
+
+message MethodDescriptorProto {
+  optional string name        = 1;
+  optional string input_type  = 2;
+  optional string output_type = 3;
+  optional bool client_streaming = 5;
+  optional bool server_streaming = 6;
+}

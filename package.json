@@ -3,19 +3,24 @@
   "version": "1.0.0",
   "main": "dist/main/main.js",
   "scripts": {
-    "dev": "concurrently -k -n vite,electron \"vite\" \"wait-on tcp:5173 && tsc -p tsconfig.main.json && electron .\"",
-    "build": "vite build && tsc -p tsconfig.main.json",
-    "start": "npm run build && electron ."
+    "dev": "concurrently -k -n vite,electron \"vite\" \"wait-on tcp:5173 && tsc -p tsconfig.main.json && cp -r src/proto dist/proto && electron .\"",
+    "build": "vite build && tsc -p tsconfig.main.json && cp -r src/proto dist/proto",
+    "start": "npm run build && electron .",
+    "test": "vitest run"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "gRPC UI client — like Insomnia/Postman for gRPC",
   "dependencies": {
+    "@grpc/grpc-js": "^1.14.3",
+    "protobufjs": "^8.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@grpc/proto-loader": "^0.8.0",
+    "@grpc/reflection": "^1.0.4",
     "@types/node": "^25.5.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
@@ -25,6 +30,7 @@
     "ts-node": "^10.9.2",
     "typescript": "^6.0.2",
     "vite": "^6.0.7",
+    "vitest": "^4.1.2",
     "wait-on": "^8.0.1"
   }
 }
