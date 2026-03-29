@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import AddCollectionDialog from "./AddCollectionDialog";
 
 const containerStyle: React.CSSProperties = {
   width: 240,
@@ -25,10 +26,24 @@ const buttonStyle: React.CSSProperties = {
 };
 
 export default function Sidebar() {
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  function handleConfirm(url: string) {
+    console.log("Connect to:", url);
+  }
+
   return (
     <div style={containerStyle}>
-      <button style={buttonStyle}>+ Add Collection</button>
+      <button style={buttonStyle} onClick={() => setDialogOpen(true)}>
+        + Add Collection
+      </button>
       <span>Collections will appear here</span>
+      {dialogOpen && (
+        <AddCollectionDialog
+          onClose={() => setDialogOpen(false)}
+          onConfirm={handleConfirm}
+        />
+      )}
     </div>
   );
 }
