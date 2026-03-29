@@ -3,14 +3,20 @@ import path from "path";
 
 function createWindow(): void {
   const win = new BrowserWindow({
-    width: 400,
-    height: 200,
+    width: 1280,
+    height: 800,
     webPreferences: {
+      preload: path.join(__dirname, "preload.js"),
+      contextIsolation: true,
       nodeIntegration: false,
     },
   });
 
-  win.loadFile(path.join(__dirname, "../index.html"));
+  if (!app.isPackaged) {
+    win.loadURL("http://localhost:5173");
+  } else {
+    win.loadFile(path.join(__dirname, "../renderer/index.html"));
+  }
 }
 
 app.whenReady().then(createWindow);
