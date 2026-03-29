@@ -1,0 +1,19 @@
+{
+  "name": "hello-world-app",
+  "version": "1.0.0",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "npm run build && electron ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "electron": "^41.1.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.2"
+  }
+}
