@@ -133,8 +133,9 @@ function runReflection(
   const client = new ClientCtor(url, grpc.credentials.createInsecure());
 
   return new Promise((resolve, reject) => {
+    const deadline = new Date(Date.now() + 10_000); // 10 second timeout
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const call = (client as any).ServerReflectionInfo();
+    const call = (client as any).ServerReflectionInfo({ deadline });
     const allServices: GrpcService[] = [];
     const seenFiles = new Set<string>();
     let pendingSymbols = 0;

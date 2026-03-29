@@ -97,7 +97,7 @@ describe("against a modern server — v1 reflection only", () => {
     }));
   });
 
-  afterAll(() => server.forceShutdown());
+  afterAll(() => new Promise<void>((resolve) => server.tryShutdown(resolve)));
 
   it("discovers the Greeter service and its methods", async () => {
     const collection = await discoverServices(`localhost:${port}`);
@@ -129,7 +129,7 @@ describe("against an older server — v1alpha reflection only", () => {
     }));
   });
 
-  afterAll(() => server.forceShutdown());
+  afterAll(() => new Promise<void>((resolve) => server.tryShutdown(resolve)));
 
   it("discovers the Greeter service and its methods", async () => {
     const collection = await discoverServices(`localhost:${port}`);
@@ -156,7 +156,7 @@ describe("against a server without reflection", () => {
     ({ server, port } = await startServer(() => {}));
   });
 
-  afterAll(() => server.forceShutdown());
+  afterAll(() => new Promise<void>((resolve) => server.tryShutdown(resolve)));
 
   it("rejects with an error", async () => {
     await expect(discoverServices(`localhost:${port}`)).rejects.toThrow();
