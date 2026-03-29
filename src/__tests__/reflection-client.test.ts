@@ -1,16 +1,15 @@
 /**
- * Integration test for discoverServices.
+ * Integration tests for discoverServices.
  *
- * Strategy: spin up a real in-process gRPC server with a known service
- * (helloworld.Greeter) and server reflection enabled, then call
- * discoverServices against it and assert the returned collection matches
- * the known schema exactly.
+ * Each test group spins up a real in-process gRPC server configured
+ * differently to exercise a specific scenario. No mocks are used — we
+ * talk to real sockets so we have confidence the protocol is correctly
+ * implemented end-to-end.
  *
- * This is an integration test, not a unit test. We talk to a real gRPC
- * server over a real socket. There are no mocks. This gives us confidence
- * that the reflection protocol is correctly implemented end-to-end — if
- * we mocked the server we would only be testing our own serialisation
- * round-trip, not the actual protocol.
+ * Groups:
+ *  1. Modern server  — v1 reflection only (e.g. grpc-go >= 1.45)
+ *  2. Older server   — v1alpha reflection only
+ *  3. No reflection  — plain gRPC server, reflection not enabled
  */
 
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
@@ -20,89 +19,146 @@ import { ReflectionService } from "@grpc/reflection";
 import path from "path";
 import { discoverServices } from "../reflection-client";
 
-// The proto file that defines the test service. We use @grpc/proto-loader
-// here (rather than our inline reflection client approach) because this is
-// the server side — proto-loader is the standard way to load a service
-// definition when setting up a grpc-js server.
 const GREETER_PROTO = path.join(__dirname, "fixtures/greeter.proto");
 
-describe("discoverServices", () => {
+// ── Shared server factory ─────────────────────────────────────────────────────
+
+async function startServer(
+  setupReflection: (server: grpc.Server, packageDef: protoLoader.PackageDefinition) => void
+): Promise<{ server: grpc.Server; port: number }> {
+  const packageDef = protoLoader.loadSync(GREETER_PROTO, {
+    keepCase: false,
+    longs: String,
+    enums: String,
+    defaults: true,
+  });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const pkg = grpc.loadPackageDefinition(packageDef) as any;
+
+  const server = new grpc.Server();
+  server.addService(pkg.helloworld.Greeter.service, {
+    sayHello: (
+      _call: grpc.ServerUnaryCall<unknown, unknown>,
+      callback: grpc.sendUnaryData<unknown>
+    ) => callback(null, { message: "Hello" }),
+  });
+
+  setupReflection(server, packageDef);
+
+  const port = await new Promise<number>((resolve, reject) => {
+    server.bindAsync(
+      "0.0.0.0:0",
+      grpc.ServerCredentials.createInsecure(),
+      (err, p) => (err ? reject(err) : resolve(p))
+    );
+  });
+
+  return { server, port };
+}
+
+// Shared assertions used across both reflection groups
+function assertGreeterCollection(collection: Awaited<ReturnType<typeof discoverServices>>, url: string) {
+  expect(collection.url).toBe(url);
+
+  // Reflection services must be filtered out — they are internal protocol
+  // details and should never appear as user-visible collection entries.
+  const reflectionServices = collection.services.filter((s) =>
+    s.name.startsWith("grpc.reflection.")
+  );
+  expect(reflectionServices).toHaveLength(0);
+
+  // The Greeter service must be present
+  const greeter = collection.services.find((s) => s.name === "helloworld.Greeter");
+  expect(greeter).toBeDefined();
+
+  // SayHello must have the correct signature
+  const sayHello = greeter!.methods.find((m) => m.name === "SayHello")!;
+  expect(sayHello).toBeDefined();
+  expect(sayHello.requestType).toBe("helloworld.HelloRequest");
+  expect(sayHello.responseType).toBe("helloworld.HelloReply");
+  expect(sayHello.clientStreaming).toBe(false);
+  expect(sayHello.serverStreaming).toBe(false);
+}
+
+// ── Group 1: Modern server (v1 only) ─────────────────────────────────────────
+
+describe("against a modern server — v1 reflection only", () => {
   let server: grpc.Server;
   let port: number;
 
   beforeAll(async () => {
-    // Load the Greeter proto and create a package definition that grpc-js
-    // and @grpc/reflection both understand.
-    const packageDef = protoLoader.loadSync(GREETER_PROTO, {
-      keepCase: false,
-      longs: String,
-      enums: String,
-      defaults: true,
-    });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const pkg = grpc.loadPackageDefinition(packageDef) as any;
-
-    server = new grpc.Server();
-
-    // Register the Greeter service with a stub implementation. The handler
-    // logic doesn't matter — we only care that reflection can describe it.
-    server.addService(pkg.helloworld.Greeter.service, {
-      sayHello: (
-        _call: grpc.ServerUnaryCall<unknown, unknown>,
-        callback: grpc.sendUnaryData<unknown>
-      ) => {
-        callback(null, { message: "Hello" });
-      },
-    });
-
-    // Attach server reflection. ReflectionService reads the package
-    // definition and exposes the grpc.reflection.v1alpha endpoints so
-    // clients can ask "what services do you have?".
-    const reflection = new ReflectionService(packageDef);
-    reflection.addToServer(server);
-
-    // Bind to port 0 so the OS picks a free port, avoiding conflicts.
-    await new Promise<void>((resolve, reject) => {
-      server.bindAsync(
-        "0.0.0.0:0",
-        grpc.ServerCredentials.createInsecure(),
-        (err, boundPort) => {
-          if (err) return reject(err);
-          port = boundPort;
-          resolve();
-        }
-      );
-    });
+    ({ server, port } = await startServer((s, packageDef) => {
+      // Access the v1 implementation directly so we can add only v1, not
+      // v1alpha. This simulates grpc-go >= 1.45 and other modern frameworks
+      // that dropped v1alpha support.
+      const reflection = new ReflectionService(packageDef);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (reflection as any).v1.addToServer(s);
+    }));
   });
 
-  afterAll(() => {
-    server.forceShutdown();
-  });
+  afterAll(() => server.forceShutdown());
 
-  it("returns the url in the collection", async () => {
+  it("discovers the Greeter service and its methods", async () => {
     const collection = await discoverServices(`localhost:${port}`);
-    expect(collection.url).toBe(`localhost:${port}`);
+    assertGreeterCollection(collection, `localhost:${port}`);
   });
 
-  it("discovers the Greeter service", async () => {
+  it("does not include reflection services in the collection", async () => {
     const collection = await discoverServices(`localhost:${port}`);
-    const service = collection.services.find(
-      (s) => s.name === "helloworld.Greeter"
+    const reflectionServices = collection.services.filter((s) =>
+      s.name.startsWith("grpc.reflection.")
     );
-    expect(service).toBeDefined();
+    expect(reflectionServices).toHaveLength(0);
+  });
+});
+
+// ── Group 2: Older server (v1alpha only) ─────────────────────────────────────
+
+describe("against an older server — v1alpha reflection only", () => {
+  let server: grpc.Server;
+  let port: number;
+
+  beforeAll(async () => {
+    ({ server, port } = await startServer((s, packageDef) => {
+      // Add only v1alpha reflection, simulating older servers that predate
+      // the stable v1 spec.
+      const reflection = new ReflectionService(packageDef);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (reflection as any).v1Alpha.addToServer(s);
+    }));
   });
 
-  it("discovers the SayHello method with correct types", async () => {
-    const collection = await discoverServices(`localhost:${port}`);
-    const service = collection.services.find(
-      (s) => s.name === "helloworld.Greeter"
-    )!;
-    const method = service.methods.find((m) => m.name === "SayHello")!;
+  afterAll(() => server.forceShutdown());
 
-    expect(method).toBeDefined();
-    expect(method.requestType).toBe("helloworld.HelloRequest");
-    expect(method.responseType).toBe("helloworld.HelloReply");
-    expect(method.clientStreaming).toBe(false);
-    expect(method.serverStreaming).toBe(false);
+  it("discovers the Greeter service and its methods", async () => {
+    const collection = await discoverServices(`localhost:${port}`);
+    assertGreeterCollection(collection, `localhost:${port}`);
+  });
+
+  it("does not include reflection services in the collection", async () => {
+    const collection = await discoverServices(`localhost:${port}`);
+    const reflectionServices = collection.services.filter((s) =>
+      s.name.startsWith("grpc.reflection.")
+    );
+    expect(reflectionServices).toHaveLength(0);
+  });
+});
+
+// ── Group 3: Server without reflection ───────────────────────────────────────
+
+describe("against a server without reflection", () => {
+  let server: grpc.Server;
+  let port: number;
+
+  beforeAll(async () => {
+    // No reflection is added — just a bare Greeter service.
+    ({ server, port } = await startServer(() => {}));
+  });
+
+  afterAll(() => server.forceShutdown());
+
+  it("rejects with an error", async () => {
+    await expect(discoverServices(`localhost:${port}`)).rejects.toThrow();
   });
 });
