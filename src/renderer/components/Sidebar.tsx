@@ -46,7 +46,16 @@ const addButtonStyle: React.CSSProperties = {
   flexShrink: 0,
 };
 
-const collectionUrlStyle: React.CSSProperties = {
+const collectionHeaderStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 4,
+  cursor: "pointer",
+  userSelect: "none",
+  paddingBottom: 4,
+};
+
+const collectionNameStyle: React.CSSProperties = {
   color: "#cdd6f4",
   fontWeight: 600,
   fontSize: 11,
@@ -55,16 +64,33 @@ const collectionUrlStyle: React.CSSProperties = {
   overflow: "hidden",
   textOverflow: "ellipsis",
   whiteSpace: "nowrap",
-  paddingBottom: 4,
+  flex: 1,
+};
+
+const chevronStyle = (open: boolean): React.CSSProperties => ({
+  color: "#6c7086",
+  fontSize: 9,
+  flexShrink: 0,
+  transform: open ? "rotate(90deg)" : "rotate(0deg)",
+  transition: "transform 0.15s ease",
+});
+
+const serviceHeaderStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 4,
+  cursor: "pointer",
+  userSelect: "none",
+  padding: "2px 0 2px 8px",
 };
 
 const serviceNameStyle: React.CSSProperties = {
   color: "#89b4fa",
   fontSize: 12,
-  padding: "2px 0 2px 8px",
   overflow: "hidden",
   textOverflow: "ellipsis",
   whiteSpace: "nowrap",
+  flex: 1,
 };
 
 const methodStyle: React.CSSProperties = {
@@ -76,6 +102,11 @@ const methodStyle: React.CSSProperties = {
   whiteSpace: "nowrap",
   overflow: "hidden",
   textOverflow: "ellipsis",
+};
+
+const methodHoverStyle: React.CSSProperties = {
+  ...methodStyle,
+  background: "#25253a",
 };
 
 const methodActiveStyle: React.CSSProperties = {
@@ -94,6 +125,18 @@ export default function Sidebar({ selectedMethod, onSelectMethod }: Props) {
   const [collections, setCollections] = useState<NamedCollection[]>(loadCollections);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Collapsed state: Set of collapsed keys. Collections keyed by url, services by "url::svcName".
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [hoveredMethod, setHoveredMethod] = useState<string | null>(null);
+
+  function toggleCollapsed(key: string) {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
 
   function handleConfirm(name: string, url: string) {
     setLoading(true);
@@ -117,23 +160,23 @@ export default function Sidebar({ selectedMethod, onSelectMethod }: Props) {
         disabled={loading}
       >
         {loading ? (
-        <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span
-            style={{
-              width: 12,
-              height: 12,
-              borderRadius: "50%",
-              border: "2px solid #6c7086",
-              borderTopColor: "#cdd6f4",
-              display: "inline-block",
-              animation: "spin 0.7s linear infinite",
-            }}
-          />
-          Connecting…
-        </span>
-      ) : (
-        "+ Add Collection"
-      )}
+          <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span
+              style={{
+                width: 12,
+                height: 12,
+                borderRadius: "50%",
+                border: "2px solid #6c7086",
+                borderTopColor: "#cdd6f4",
+                display: "inline-block",
+                animation: "spin 0.7s linear infinite",
+              }}
+            />
+            Connecting…
+          </span>
+        ) : (
+          "+ Add Collection"
+        )}
       </button>
 
       {error && (
@@ -144,42 +187,71 @@ export default function Sidebar({ selectedMethod, onSelectMethod }: Props) {
         <span>Collections will appear here</span>
       )}
 
-      {collections.map((col) => (
-        <div key={col.url}>
-          <div style={collectionUrlStyle} title={col.url}>
-            {col.name}
-          </div>
-          {col.services.map((svc) => (
-            <div key={svc.name}>
-              <div style={serviceNameStyle} title={svc.name}>
-                {svc.name.split(".").pop()}
-              </div>
-              {svc.methods.map((method) => {
-                const isActive =
-                  selectedMethod?.collectionUrl === col.url &&
-                  selectedMethod?.serviceName === svc.name &&
-                  selectedMethod?.methodName === method.name;
-                return (
-                  <div
-                    key={method.name}
-                    style={isActive ? methodActiveStyle : methodStyle}
-                    title={method.name}
-                    onClick={() =>
-                      onSelectMethod({
-                        collectionUrl: col.url,
-                        serviceName: svc.name,
-                        methodName: method.name,
-                      })
-                    }
-                  >
-                    {method.name}
-                  </div>
-                );
-              })}
+      {collections.map((col) => {
+        const colOpen = !collapsed.has(col.url);
+        return (
+          <div key={col.url}>
+            <div
+              style={collectionHeaderStyle}
+              title={col.url}
+              onClick={() => toggleCollapsed(col.url)}
+            >
+              <span style={chevronStyle(colOpen)}>▶</span>
+              <span style={collectionNameStyle}>{col.name}</span>
             </div>
-          ))}
-        </div>
-      ))}
+
+            {colOpen && col.services.map((svc) => {
+              const svcKey = `${col.url}::${svc.name}`;
+              const svcOpen = !collapsed.has(svcKey);
+              return (
+                <div key={svc.name}>
+                  <div
+                    style={serviceHeaderStyle}
+                    title={svc.name}
+                    onClick={() => toggleCollapsed(svcKey)}
+                  >
+                    <span style={chevronStyle(svcOpen)}>▶</span>
+                    <span style={serviceNameStyle}>{svc.name.split(".").pop()}</span>
+                  </div>
+
+                  {svcOpen && svc.methods.map((method) => {
+                    const methodKey = `${col.url}::${svc.name}::${method.name}`;
+                    const isActive =
+                      selectedMethod?.collectionUrl === col.url &&
+                      selectedMethod?.serviceName === svc.name &&
+                      selectedMethod?.methodName === method.name;
+                    const isHovered = hoveredMethod === methodKey;
+                    return (
+                      <div
+                        key={method.name}
+                        style={
+                          isActive
+                            ? methodActiveStyle
+                            : isHovered
+                            ? methodHoverStyle
+                            : methodStyle
+                        }
+                        title={method.name}
+                        onClick={() =>
+                          onSelectMethod({
+                            collectionUrl: col.url,
+                            serviceName: svc.name,
+                            methodName: method.name,
+                          })
+                        }
+                        onMouseEnter={() => setHoveredMethod(methodKey)}
+                        onMouseLeave={() => setHoveredMethod(null)}
+                      >
+                        {method.name}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+        );
+      })}
 
       {dialogOpen && (
         <AddCollectionDialog
