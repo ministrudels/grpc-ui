@@ -29,10 +29,10 @@
 
 ## Phase 4 — Prepopulate address bar and request body
 
-- [ ] 19. Extend `descriptor.proto` to capture `DescriptorProto` (message fields: name, number, type, label)
-- [ ] 20. Store parsed message definitions alongside services in the `Collection` type
-- [ ] 21. When a method is selected, populate the address-bar input with the collection's URL
-- [ ] 22. Generate a skeleton JSON request body from the method's input-message field definitions and display it in the request editor
+- [x] 19. Extend `descriptor.proto` to capture `DescriptorProto` (message fields: name, number, type, label)
+- [x] 20. Store parsed message definitions alongside services in the `Collection` type
+- [x] 21. When a method is selected, populate the address-bar input with the collection's URL
+- [x] 22. Generate a skeleton JSON request body from the method's input-message field definitions and display it in the request editor
 
 ## Phase 5 — Send request & display response
 

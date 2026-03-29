@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import Method from "./Method";
-import type { GrpcService } from "../global";
+import type { GrpcMessage, GrpcService } from "../global";
 import type { SelectedMethod } from "../App";
+import type { OnSelectMethod } from "./Sidebar";
 
 const headerStyle: React.CSSProperties = {
   display: "flex",
@@ -32,11 +33,12 @@ const chevronStyle = (open: boolean): React.CSSProperties => ({
 interface Props {
   service: GrpcService;
   collectionUrl: string;
+  messages: GrpcMessage[];
   selectedMethod: SelectedMethod | null;
-  onSelectMethod: (selected: SelectedMethod) => void;
+  onSelectMethod: OnSelectMethod;
 }
 
-export default function Service({ service, collectionUrl, selectedMethod, onSelectMethod }: Props) {
+export default function Service({ service, collectionUrl, messages, selectedMethod, onSelectMethod }: Props) {
   const [open, setOpen] = useState(true);
 
   return (
@@ -52,16 +54,10 @@ export default function Service({ service, collectionUrl, selectedMethod, onSele
           method={method}
           active={
             selectedMethod?.collectionUrl === collectionUrl &&
-            selectedMethod?.serviceName === service.name &&
-            selectedMethod?.methodName === method.name
+            selectedMethod?.service.name === service.name &&
+            selectedMethod?.method.name === method.name
           }
-          onClick={() =>
-            onSelectMethod({
-              collectionUrl,
-              serviceName: service.name,
-              methodName: method.name,
-            })
-          }
+          onClick={() => onSelectMethod(collectionUrl, service, method, messages)}
         />
       ))}
     </div>

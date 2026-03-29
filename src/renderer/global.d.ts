@@ -1,5 +1,21 @@
 export {};
 
+export interface GrpcField {
+  name: string;
+  number: number;
+  /** e.g. "TYPE_STRING", "TYPE_MESSAGE" */
+  type: string;
+  /** For TYPE_MESSAGE / TYPE_ENUM: fully-qualified name without leading dot */
+  typeName: string;
+  repeated: boolean;
+}
+
+export interface GrpcMessage {
+  /** Fully-qualified, e.g. "helloworld.HelloRequest" */
+  name: string;
+  fields: GrpcField[];
+}
+
 export interface GrpcMethod {
   name: string;
   requestType: string;
@@ -16,6 +32,7 @@ export interface GrpcService {
 export interface Collection {
   url: string;
   services: GrpcService[];
+  messages: GrpcMessage[];
 }
 
 declare global {

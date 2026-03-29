@@ -1,5 +1,9 @@
 import React from "react";
 
+interface Props {
+  url: string;
+}
+
 const containerStyle: React.CSSProperties = {
   display: "flex",
   flex: 1,
@@ -12,7 +16,7 @@ const inputStyle: React.CSSProperties = {
   background: "#141414",
   border: "1px solid #2d2d2d",
   borderRadius: 4,
-  color: "#686868",
+  color: "#e2e2e2",
   fontSize: 13,
   padding: "6px 10px",
 };
@@ -28,10 +32,15 @@ const buttonStyle: React.CSSProperties = {
   flexShrink: 0,
 };
 
-export default function AddressBar() {
+export default function AddressBar({ url }: Props) {
   return (
     <div style={containerStyle}>
-      <input style={inputStyle} placeholder="Address bar — gRPC server URL" readOnly />
+      <input
+        style={inputStyle}
+        value={url}
+        placeholder="Select a method from the sidebar"
+        readOnly
+      />
       <button style={buttonStyle}>Send</button>
     </div>
   );

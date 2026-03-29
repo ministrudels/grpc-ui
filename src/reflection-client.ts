@@ -3,15 +3,10 @@ import * as protobuf from "protobufjs";
 import * as fs from "fs";
 import path from "path";
 
-// Proto files live in src/proto/ and are copied to dist/proto/ at build time.
-// See src/proto/README.md for why these files exist.
-//
-// The path differs between compiled output (dist/main/ -> ../proto = dist/proto/)
-// and Vitest running source directly (src/ -> proto = src/proto/), so we probe both.
 function findProtoDir(): string {
   const candidates = [
+    path.join(__dirname, "../../src/proto"), // dev: dist/main/ → src/proto/ (always up to date)
     path.join(__dirname, "../proto"),        // production build: dist/main/ → dist/proto/
-    path.join(__dirname, "../../src/proto"), // dev: dist/main/ → src/proto/
     path.join(__dirname, "proto"),           // vitest: src/ → src/proto/
   ];
   const found = candidates.find((dir) =>
@@ -26,6 +21,22 @@ function findProtoDir(): string {
 const PROTO_DIR = findProtoDir();
 
 // ── Public types ─────────────────────────────────────────────────────────────
+
+export interface GrpcField {
+  name: string;
+  number: number;
+  /** e.g. "TYPE_STRING", "TYPE_MESSAGE" */
+  type: string;
+  /** For TYPE_MESSAGE / TYPE_ENUM: fully-qualified name without leading dot */
+  typeName: string;
+  repeated: boolean;
+}
+
+export interface GrpcMessage {
+  /** Fully-qualified, e.g. "helloworld.HelloRequest" */
+  name: string;
+  fields: GrpcField[];
+}
 
 export interface GrpcMethod {
   name: string;
@@ -43,11 +54,11 @@ export interface GrpcService {
 export interface Collection {
   url: string;
   services: GrpcService[];
+  /** All message types discovered — used to generate skeleton JSON */
+  messages: GrpcMessage[];
 }
 
-// ── Build a versioned reflection client constructor ───────────────────────────
-// Both v1 and v1alpha have identical message structures — only the package
-// name (and therefore the RPC path) differs.
+// ── Reflection client constructors ───────────────────────────────────────────
 
 function makeReflectionClientCtor(protoFile: string, pkg: string) {
   const root = protobuf.loadSync(path.join(PROTO_DIR, protoFile));
@@ -74,8 +85,6 @@ function makeReflectionClientCtor(protoFile: string, pkg: string) {
   );
 }
 
-// Initialised once at module load time.
-// v1alpha is tried first; v1 is the fallback (see discoverServices).
 const ClientCtors = {
   v1alpha: makeReflectionClientCtor("reflection_v1alpha.proto", "grpc.reflection.v1alpha"),
   v1:      makeReflectionClientCtor("reflection_v1.proto",      "grpc.reflection.v1"),
@@ -86,9 +95,24 @@ const ClientCtors = {
 const descriptorRoot = protobuf.loadSync(path.join(PROTO_DIR, "descriptor.proto"));
 const FileDescriptorProtoType = descriptorRoot.lookupType("google.protobuf.FileDescriptorProto");
 
+interface RawField {
+  name?: string;
+  number?: number;
+  label?: string | number;
+  type?: string | number;
+  typeName?: string;
+}
+
+interface RawDescriptor {
+  name?: string;
+  field?: RawField[];
+  nestedType?: RawDescriptor[];
+}
+
 interface RawFileDescriptor {
   name?: string;
   package?: string;
+  messageType?: RawDescriptor[];
   service?: Array<{
     name?: string;
     method?: Array<{
@@ -101,18 +125,21 @@ interface RawFileDescriptor {
   }>;
 }
 
-function parseFileDescriptor(bytes: Buffer, seenFiles: Set<string>): GrpcService[] {
+function parseFileDescriptor(
+  bytes: Buffer,
+  seenFiles: Set<string>
+): { services: GrpcService[]; messages: GrpcMessage[] } | null {
   const fd = FileDescriptorProtoType.toObject(
     FileDescriptorProtoType.decode(bytes),
-    { defaults: true, arrays: true }
+    { defaults: true, arrays: true, enums: String }
   ) as RawFileDescriptor;
 
-  if (!fd.name || seenFiles.has(fd.name)) return [];
+  if (!fd.name || seenFiles.has(fd.name)) return null;
   seenFiles.add(fd.name);
 
   const pkg = fd.package ?? "";
 
-  return (fd.service ?? []).map((svc) => ({
+  const services: GrpcService[] = (fd.service ?? []).map((svc) => ({
     name: pkg ? `${pkg}.${svc.name ?? ""}` : (svc.name ?? ""),
     methods: (svc.method ?? []).map((m) => ({
       name: m.name ?? "",
@@ -122,21 +149,44 @@ function parseFileDescriptor(bytes: Buffer, seenFiles: Set<string>): GrpcService
       serverStreaming: m.serverStreaming ?? false,
     })),
   }));
+
+  const messages = parseDescriptors(fd.messageType ?? [], pkg);
+
+  return { services, messages };
+}
+
+function parseDescriptors(descriptors: RawDescriptor[], scope: string): GrpcMessage[] {
+  const result: GrpcMessage[] = [];
+  for (const desc of descriptors) {
+    const fullName = scope ? `${scope}.${desc.name ?? ""}` : (desc.name ?? "");
+    result.push({
+      name: fullName,
+      fields: (desc.field ?? []).map((f) => ({
+        name: f.name ?? "",
+        number: f.number ?? 0,
+        type: typeof f.type === "string" ? f.type : `TYPE_${f.type}`,
+        typeName: (f.typeName ?? "").replace(/^\./, ""),
+        repeated: f.label === "LABEL_REPEATED" || f.label === 3,
+      })),
+    });
+    if (desc.nestedType?.length) {
+      result.push(...parseDescriptors(desc.nestedType, fullName));
+    }
+  }
+  return result;
 }
 
 // ── Core reflection logic ─────────────────────────────────────────────────────
 
-function runReflection(
-  url: string,
-  ClientCtor: grpc.ServiceClientConstructor
-): Promise<Collection> {
+function runReflection(url: string, ClientCtor: grpc.ServiceClientConstructor): Promise<Collection> {
   const client = new ClientCtor(url, grpc.credentials.createInsecure());
 
   return new Promise((resolve, reject) => {
-    const deadline = new Date(Date.now() + 10_000); // 10 second timeout
+    const deadline = new Date(Date.now() + 10_000);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const call = (client as any).ServerReflectionInfo({ deadline });
     const allServices: GrpcService[] = [];
+    const allMessages: GrpcMessage[] = [];
     const seenFiles = new Set<string>();
     let pendingSymbols = 0;
     let listDone = false;
@@ -149,7 +199,7 @@ function runReflection(
       for (const s of allServices) {
         if (!unique.has(s.name)) unique.set(s.name, s);
       }
-      resolve({ url, services: Array.from(unique.values()) });
+      resolve({ url, services: Array.from(unique.values()), messages: allMessages });
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -159,33 +209,30 @@ function runReflection(
           response.listServicesResponse.service as Array<{ name: string }>
         )
           .map((s) => s.name)
-          .filter((n: string) => !n.startsWith("grpc.reflection."));
+          .filter((n) => !n.startsWith("grpc.reflection."));
 
         listDone = true;
         pendingSymbols = names.length;
+        if (names.length === 0) { maybeFinish(); return; }
+        for (const name of names) call.write({ fileContainingSymbol: name });
 
-        if (names.length === 0) {
-          maybeFinish();
-          return;
-        }
-
-        for (const name of names) {
-          call.write({ fileContainingSymbol: name });
-        }
       } else if (response.fileDescriptorResponse) {
-        const protos: Uint8Array[] =
-          response.fileDescriptorResponse.fileDescriptorProto ?? [];
-
+        const protos: Uint8Array[] = response.fileDescriptorResponse.fileDescriptorProto ?? [];
         for (const raw of protos) {
           const buf = Buffer.isBuffer(raw) ? raw : Buffer.from(raw);
           try {
-            allServices.push(...parseFileDescriptor(buf, seenFiles));
+            const parsed = parseFileDescriptor(buf, seenFiles);
+            if (parsed) {
+              allServices.push(...parsed.services);
+              allMessages.push(...parsed.messages);
+            }
           } catch (e) {
             console.error("Failed to decode FileDescriptorProto:", e);
           }
         }
         pendingSymbols--;
         maybeFinish();
+
       } else if (response.errorResponse) {
         console.warn("Reflection error:", response.errorResponse.errorMessage);
         pendingSymbols--;
@@ -193,23 +240,17 @@ function runReflection(
       }
     });
 
-    call.on("error", (err: Error) => {
-      client.close();
-      reject(err);
-    });
-
+    call.on("error", (err: Error) => { client.close(); reject(err); });
     call.write({ listServices: "" });
   });
 }
 
-// ── Main exported function ────────────────────────────────────────────────────
+// ── Main export ───────────────────────────────────────────────────────────────
 
 export async function discoverServices(url: string): Promise<Collection> {
   try {
     return await runReflection(url, ClientCtors.v1alpha);
   } catch (err: unknown) {
-    // UNIMPLEMENTED (code 12) means the server doesn't support v1alpha —
-    // many modern servers (e.g. grpc-go) only expose the v1 endpoint.
     if ((err as { code?: number }).code === grpc.status.UNIMPLEMENTED) {
       return runReflection(url, ClientCtors.v1);
     }

@@ -4,7 +4,53 @@ package google.protobuf;
 message FileDescriptorProto {
   optional string name    = 1;
   optional string package = 2;
+  // field 3 = dependency (import paths) — not needed here
+  repeated DescriptorProto message_type = 4;
   repeated ServiceDescriptorProto service = 6;
+}
+
+// Describes a message type and its fields.
+message DescriptorProto {
+  optional string name = 1;
+  repeated FieldDescriptorProto field = 2;
+  repeated DescriptorProto nested_type = 3;
+}
+
+// Describes a single field within a message.
+message FieldDescriptorProto {
+  optional string name     = 1;
+  optional int32  number   = 3;
+  optional FieldDescriptorProto.Label label = 4;
+  optional FieldDescriptorProto.Type  type  = 5;
+  // For TYPE_MESSAGE / TYPE_ENUM: fully-qualified name, e.g. ".helloworld.HelloRequest"
+  optional string type_name = 6;
+
+  enum Type {
+    TYPE_DOUBLE   = 1;
+    TYPE_FLOAT    = 2;
+    TYPE_INT64    = 3;
+    TYPE_UINT64   = 4;
+    TYPE_INT32    = 5;
+    TYPE_FIXED64  = 6;
+    TYPE_FIXED32  = 7;
+    TYPE_BOOL     = 8;
+    TYPE_STRING   = 9;
+    TYPE_GROUP    = 10;
+    TYPE_MESSAGE  = 11;
+    TYPE_BYTES    = 12;
+    TYPE_UINT32   = 13;
+    TYPE_ENUM     = 14;
+    TYPE_SFIXED32 = 15;
+    TYPE_SFIXED64 = 16;
+    TYPE_SINT32   = 17;
+    TYPE_SINT64   = 18;
+  }
+
+  enum Label {
+    LABEL_OPTIONAL = 1;
+    LABEL_REQUIRED = 2;
+    LABEL_REPEATED = 3;
+  }
 }
 
 message ServiceDescriptorProto {

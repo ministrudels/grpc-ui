@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import AddCollectionDialog from "./AddCollectionDialog";
 import Collection from "./Collection";
-import type { Collection as CollectionType } from "../global";
-import type { SelectedMethod } from "../App";
+import type { Collection as CollectionType, GrpcMessage, GrpcMethod, GrpcService } from "../global";
 
 type NamedCollection = CollectionType & { name: string };
 
@@ -47,9 +46,16 @@ const addButtonStyle: React.CSSProperties = {
   flexShrink: 0,
 };
 
+export type OnSelectMethod = (
+  collectionUrl: string,
+  service: GrpcService,
+  method: GrpcMethod,
+  messages: GrpcMessage[]
+) => void;
+
 interface Props {
-  selectedMethod: SelectedMethod | null;
-  onSelectMethod: (selected: SelectedMethod) => void;
+  selectedMethod: { collectionUrl: string; service: GrpcService; method: GrpcMethod } | null;
+  onSelectMethod: OnSelectMethod;
 }
 
 export default function Sidebar({ selectedMethod, onSelectMethod }: Props) {
@@ -57,6 +63,21 @@ export default function Sidebar({ selectedMethod, onSelectMethod }: Props) {
   const [collections, setCollections] = useState<NamedCollection[]>(loadCollections);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  function handleResync(url: string) {
+    const existing = collections.find((c) => c.url === url);
+    if (!existing) return;
+    window.grpcui
+      .connectServer(url)
+      .then((fresh) => {
+        const next = collections.map((c) =>
+          c.url === url ? { ...fresh, name: existing.name } : c
+        );
+        saveCollections(next);
+        setCollections(next);
+      })
+      .catch((err: Error) => setError(err.message ?? "Failed to resync"));
+  }
 
   function handleConfirm(name: string, url: string) {
     setLoading(true);
@@ -113,6 +134,7 @@ export default function Sidebar({ selectedMethod, onSelectMethod }: Props) {
           collection={col}
           selectedMethod={selectedMethod}
           onSelectMethod={onSelectMethod}
+          onResync={handleResync}
         />
       ))}
 
