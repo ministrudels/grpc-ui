@@ -14,8 +14,8 @@ const styles: Record<string, React.CSSProperties> = {
   app: {
     display: "flex",
     height: "100vh",
-    background: "#1e1e2e",
-    color: "#cdd6f4",
+    background: "#1a1a1a",
+    color: "#e2e2e2",
   },
   main: {
     flex: 1,
@@ -28,7 +28,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     gap: 8,
     padding: "8px 12px",
-    borderBottom: "1px solid #313244",
+    borderBottom: "1px solid #2d2d2d",
     flexShrink: 0,
   },
   panels: {
@@ -41,7 +41,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    color: "#45475a",
+    color: "#4a4a4a",
     fontSize: 14,
   },
 };
@@ -51,10 +51,7 @@ export default function App() {
 
   return (
     <div style={styles.app}>
-      <Sidebar
-        selectedMethod={selectedMethod}
-        onSelectMethod={setSelectedMethod}
-      />
+      <Sidebar selectedMethod={selectedMethod} onSelectMethod={setSelectedMethod} />
       <div style={styles.main}>
         <div style={styles.topRow}>
           <AddressBar />
@@ -66,9 +63,7 @@ export default function App() {
               <ResponsePanel />
             </>
           ) : (
-            <div style={styles.placeholder}>
-              Select a method from the sidebar to get started
-            </div>
+            <div style={styles.placeholder}>Select a method from the sidebar to get started</div>
           )}
         </div>
       </div>

@@ -9,19 +9,19 @@ const containerStyle: React.CSSProperties = {
 
 const inputStyle: React.CSSProperties = {
   flex: 1,
-  background: "#181825",
-  border: "1px solid #313244",
+  background: "#141414",
+  border: "1px solid #2d2d2d",
   borderRadius: 4,
-  color: "#6c7086",
+  color: "#686868",
   fontSize: 13,
   padding: "6px 10px",
 };
 
 const buttonStyle: React.CSSProperties = {
-  background: "#313244",
+  background: "#2d2d2d",
   border: "none",
   borderRadius: 4,
-  color: "#6c7086",
+  color: "#686868",
   fontSize: 13,
   padding: "6px 16px",
   cursor: "pointer",

@@ -12,7 +12,7 @@ const headerStyle: React.CSSProperties = {
 };
 
 const nameStyle: React.CSSProperties = {
-  color: "#cdd6f4",
+  color: "#e2e2e2",
   fontWeight: 600,
   fontSize: 11,
   textTransform: "uppercase",
@@ -24,7 +24,7 @@ const nameStyle: React.CSSProperties = {
 };
 
 const chevronStyle = (open: boolean): React.CSSProperties => ({
-  color: "#6c7086",
+  color: "#686868",
   fontSize: 9,
   flexShrink: 0,
   transform: open ? "rotate(90deg)" : "rotate(0deg)",

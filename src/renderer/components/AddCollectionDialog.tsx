@@ -11,8 +11,8 @@ const overlayStyle: React.CSSProperties = {
 };
 
 const dialogStyle: React.CSSProperties = {
-  background: "#181825",
-  border: "1px solid #313244",
+  background: "#141414",
+  border: "1px solid #2d2d2d",
   borderRadius: 6,
   padding: 24,
   width: 400,
@@ -22,13 +22,13 @@ const dialogStyle: React.CSSProperties = {
 };
 
 const labelStyle: React.CSSProperties = {
-  color: "#cdd6f4",
+  color: "#e2e2e2",
   fontSize: 14,
   fontWeight: 600,
 };
 
 const subTextStyle: React.CSSProperties = {
-  color: "#6c7086",
+  color: "#686868",
   fontSize: 12,
   marginTop: 2,
 };
@@ -40,15 +40,15 @@ const fieldStyle: React.CSSProperties = {
 };
 
 const fieldLabelStyle: React.CSSProperties = {
-  color: "#a6adc8",
+  color: "#9a9a9a",
   fontSize: 12,
 };
 
 const inputStyle: React.CSSProperties = {
-  background: "#1e1e2e",
-  border: "1px solid #313244",
+  background: "#1a1a1a",
+  border: "1px solid #2d2d2d",
   borderRadius: 4,
-  color: "#cdd6f4",
+  color: "#e2e2e2",
   fontSize: 13,
   padding: "8px 10px",
   width: "100%",
@@ -62,9 +62,9 @@ const actionsStyle: React.CSSProperties = {
 
 const cancelButtonStyle: React.CSSProperties = {
   background: "transparent",
-  border: "1px solid #313244",
+  border: "1px solid #2d2d2d",
   borderRadius: 4,
-  color: "#6c7086",
+  color: "#686868",
   fontSize: 13,
   padding: "6px 16px",
   cursor: "pointer",
@@ -74,7 +74,7 @@ const confirmButtonStyle: React.CSSProperties = {
   background: "#89b4fa",
   border: "none",
   borderRadius: 4,
-  color: "#1e1e2e",
+  color: "#1a1a1a",
   fontSize: 13,
   fontWeight: 600,
   padding: "6px 16px",

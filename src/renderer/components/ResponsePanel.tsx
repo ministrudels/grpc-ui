@@ -3,7 +3,7 @@ import React from "react";
 const style: React.CSSProperties = {
   flex: 1,
   padding: 12,
-  color: "#6c7086",
+  color: "#686868",
   fontSize: 13,
 };
 

@@ -24,21 +24,21 @@ function saveCollections(collections: NamedCollection[]): void {
 const containerStyle: React.CSSProperties = {
   width: 240,
   flexShrink: 0,
-  borderRight: "1px solid #313244",
+  borderRight: "1px solid #2d2d2d",
   padding: 12,
   display: "flex",
   flexDirection: "column",
   gap: 8,
-  color: "#6c7086",
+  color: "#686868",
   fontSize: 13,
   overflowY: "auto",
 };
 
 const addButtonStyle: React.CSSProperties = {
-  background: "#313244",
+  background: "#2d2d2d",
   border: "none",
   borderRadius: 4,
-  color: "#cdd6f4",
+  color: "#e2e2e2",
   fontSize: 13,
   padding: "6px 10px",
   cursor: "pointer",
@@ -86,8 +86,8 @@ export default function Sidebar({ selectedMethod, onSelectMethod }: Props) {
                 width: 12,
                 height: 12,
                 borderRadius: "50%",
-                border: "2px solid #6c7086",
-                borderTopColor: "#cdd6f4",
+                border: "2px solid #686868",
+                borderTopColor: "#e2e2e2",
                 display: "inline-block",
                 animation: "spin 0.7s linear infinite",
               }}

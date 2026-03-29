@@ -13,7 +13,7 @@ const headerStyle: React.CSSProperties = {
 };
 
 const nameStyle: React.CSSProperties = {
-  color: "#89b4fa",
+  color: "#aaaaaa",
   fontSize: 12,
   overflow: "hidden",
   textOverflow: "ellipsis",
@@ -22,7 +22,7 @@ const nameStyle: React.CSSProperties = {
 };
 
 const chevronStyle = (open: boolean): React.CSSProperties => ({
-  color: "#6c7086",
+  color: "#686868",
   fontSize: 9,
   flexShrink: 0,
   transform: open ? "rotate(90deg)" : "rotate(0deg)",
