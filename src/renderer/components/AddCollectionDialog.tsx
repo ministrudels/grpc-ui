@@ -33,6 +33,17 @@ const subTextStyle: React.CSSProperties = {
   marginTop: 2,
 };
 
+const fieldStyle: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 6,
+};
+
+const fieldLabelStyle: React.CSSProperties = {
+  color: "#a6adc8",
+  fontSize: 12,
+};
+
 const inputStyle: React.CSSProperties = {
   background: "#1e1e2e",
   border: "1px solid #313244",
@@ -72,16 +83,18 @@ const confirmButtonStyle: React.CSSProperties = {
 
 interface Props {
   onClose: () => void;
-  onConfirm: (url: string) => void;
+  onConfirm: (name: string, url: string) => void;
 }
 
 export default function AddCollectionDialog({ onClose, onConfirm }: Props) {
+  const [name, setName] = useState("");
   const [url, setUrl] = useState("");
 
   function handleConfirm() {
-    const trimmed = url.trim();
-    if (!trimmed) return;
-    onConfirm(trimmed);
+    const trimmedName = name.trim();
+    const trimmedUrl = url.trim();
+    if (!trimmedName || !trimmedUrl) return;
+    onConfirm(trimmedName, trimmedUrl);
     onClose();
   }
 
@@ -99,14 +112,30 @@ export default function AddCollectionDialog({ onClose, onConfirm }: Props) {
             Connect to a gRPC server with server reflection enabled
           </div>
         </div>
-        <input
-          style={inputStyle}
-          placeholder="localhost:50051"
-          value={url}
-          autoFocus
-          onChange={(e) => setUrl(e.target.value)}
-          onKeyDown={handleKeyDown}
-        />
+
+        <div style={fieldStyle}>
+          <label style={fieldLabelStyle}>Name</label>
+          <input
+            style={inputStyle}
+            placeholder="My Service"
+            value={name}
+            autoFocus
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+        </div>
+
+        <div style={fieldStyle}>
+          <label style={fieldLabelStyle}>Server URL</label>
+          <input
+            style={inputStyle}
+            placeholder="localhost:50051"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+        </div>
+
         <div style={actionsStyle}>
           <button style={cancelButtonStyle} onClick={onClose}>
             Cancel

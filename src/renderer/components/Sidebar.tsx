@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import AddCollectionDialog from "./AddCollectionDialog";
 import type { Collection } from "../global";
 
+type NamedCollection = Collection & { name: string };
+
 const containerStyle: React.CSSProperties = {
   width: 240,
   flexShrink: 0,
@@ -62,16 +64,16 @@ const methodStyle: React.CSSProperties = {
 
 export default function Sidebar() {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [collections, setCollections] = useState<Collection[]>([]);
+  const [collections, setCollections] = useState<NamedCollection[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  function handleConfirm(url: string) {
+  function handleConfirm(name: string, url: string) {
     setLoading(true);
     setError(null);
     window.grpcui
       .connectServer(url)
-      .then((collection) => setCollections((prev) => [...prev, collection]))
+      .then((collection) => setCollections((prev) => [...prev, { ...collection, name }]))
       .catch((err: Error) => setError(err.message ?? "Failed to connect"))
       .finally(() => setLoading(false));
   }
@@ -114,7 +116,7 @@ export default function Sidebar() {
       {collections.map((col) => (
         <div key={col.url}>
           <div style={collectionUrlStyle} title={col.url}>
-            {col.url}
+            {col.name}
           </div>
           {col.services.map((svc) => (
             <div key={svc.name}>
