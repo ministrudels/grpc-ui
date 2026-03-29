@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import AddCollectionDialog from "./AddCollectionDialog";
 import type { Collection } from "../global";
+import type { SelectedMethod } from "../App";
 
 type NamedCollection = Collection & { name: string };
 
@@ -77,7 +78,18 @@ const methodStyle: React.CSSProperties = {
   textOverflow: "ellipsis",
 };
 
-export default function Sidebar() {
+const methodActiveStyle: React.CSSProperties = {
+  ...methodStyle,
+  background: "#313244",
+  color: "#cdd6f4",
+};
+
+interface Props {
+  selectedMethod: SelectedMethod | null;
+  onSelectMethod: (selected: SelectedMethod) => void;
+}
+
+export default function Sidebar({ selectedMethod, onSelectMethod }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [collections, setCollections] = useState<NamedCollection[]>(loadCollections);
   const [loading, setLoading] = useState(false);
@@ -142,11 +154,28 @@ export default function Sidebar() {
               <div style={serviceNameStyle} title={svc.name}>
                 {svc.name.split(".").pop()}
               </div>
-              {svc.methods.map((method) => (
-                <div key={method.name} style={methodStyle} title={method.name}>
-                  {method.name}
-                </div>
-              ))}
+              {svc.methods.map((method) => {
+                const isActive =
+                  selectedMethod?.collectionUrl === col.url &&
+                  selectedMethod?.serviceName === svc.name &&
+                  selectedMethod?.methodName === method.name;
+                return (
+                  <div
+                    key={method.name}
+                    style={isActive ? methodActiveStyle : methodStyle}
+                    title={method.name}
+                    onClick={() =>
+                      onSelectMethod({
+                        collectionUrl: col.url,
+                        serviceName: svc.name,
+                        methodName: method.name,
+                      })
+                    }
+                  >
+                    {method.name}
+                  </div>
+                );
+              })}
             </div>
           ))}
         </div>

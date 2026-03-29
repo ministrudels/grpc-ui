@@ -21,11 +21,11 @@
 
 ## Phase 3 — Method selection
 
-- [ ] 14. Track selected method in `App.tsx` state as `{ collectionUrl: string; serviceName: string; methodName: string } | null`
-- [ ] 15. Pass an `onSelectMethod` callback down from `App` → `Sidebar` → method items
-- [ ] 16. Highlight the active method in the sidebar (distinct background/color)
-- [ ] 17. Show a "Select a method to get started" placeholder in the centre panels when nothing is selected
-- [ ] 18. Render the Request and Response panels only when a method is selected
+- [x] 14. Track selected method in `App.tsx` state as `{ collectionUrl: string; serviceName: string; methodName: string } | null`
+- [x] 15. Pass an `onSelectMethod` callback down from `App` → `Sidebar` → method items
+- [x] 16. Highlight the active method in the sidebar (distinct background/color)
+- [x] 17. Show a "Select a method to get started" placeholder in the centre panels when nothing is selected
+- [x] 18. Render the Request and Response panels only when a method is selected
 
 ## Phase 4 — Prepopulate address bar and request body
 
