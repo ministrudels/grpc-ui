@@ -4,6 +4,21 @@ import type { Collection } from "../global";
 
 type NamedCollection = Collection & { name: string };
 
+const STORAGE_KEY = "grpcui:collections";
+
+function loadCollections(): NamedCollection[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as NamedCollection[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveCollections(collections: NamedCollection[]): void {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(collections));
+}
+
 const containerStyle: React.CSSProperties = {
   width: 240,
   flexShrink: 0,
@@ -64,7 +79,7 @@ const methodStyle: React.CSSProperties = {
 
 export default function Sidebar() {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [collections, setCollections] = useState<NamedCollection[]>([]);
+  const [collections, setCollections] = useState<NamedCollection[]>(loadCollections);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -73,7 +88,11 @@ export default function Sidebar() {
     setError(null);
     window.grpcui
       .connectServer(url)
-      .then((collection) => setCollections((prev) => [...prev, { ...collection, name }]))
+      .then((collection) => {
+        const next = [...collections, { ...collection, name }];
+        saveCollections(next);
+        setCollections(next);
+      })
       .catch((err: Error) => setError(err.message ?? "Failed to connect"))
       .finally(() => setLoading(false));
   }
