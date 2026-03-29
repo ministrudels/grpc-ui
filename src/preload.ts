@@ -1,4 +1,6 @@
-import { contextBridge } from "electron";
+import { contextBridge, ipcRenderer } from "electron";
 
-// IPC bridge will be exposed here in Phase 2
-contextBridge.exposeInMainWorld("grpcui", {});
+contextBridge.exposeInMainWorld("grpcui", {
+  connectServer: (url: string) =>
+    ipcRenderer.invoke("grpc:connect-server", url),
+});

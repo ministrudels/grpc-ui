@@ -29,7 +29,9 @@ export default function Sidebar() {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   function handleConfirm(url: string) {
-    console.log("Connect to:", url);
+    window.grpcui.connectServer(url).then((result) => {
+      console.log("Connected:", result);
+    });
   }
 
   return (

@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
 import path from "path";
 
 function createWindow(): void {
@@ -18,6 +18,12 @@ function createWindow(): void {
     win.loadFile(path.join(__dirname, "../renderer/index.html"));
   }
 }
+
+ipcMain.handle("grpc:connect-server", async (_event, url: string) => {
+  // Step 7: server reflection logic will be implemented here
+  console.log("Connecting to gRPC server:", url);
+  return { url };
+});
 
 app.whenReady().then(createWindow);
 
