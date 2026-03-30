@@ -1,0 +1,41 @@
+.collection-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  user-select: none;
+  padding-bottom: 4px;
+}
+.collection-name {
+  color: #e2e2e2;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+.collection-chevron {
+  color: #686868;
+  font-size: 9px;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+.collection-chevron.open {
+  transform: rotate(90deg);
+}
+.resync-btn {
+  background: none;
+  border: none;
+  color: #686868;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 0 2px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.resync-btn.syncing {
+  animation: spin 0.7s linear infinite;
+}

@@ -1,0 +1,33 @@
+.address-bar {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+}
+.address-input {
+  flex: 1;
+  background: #141414;
+  border: 1px solid #2d2d2d;
+  border-radius: 4px;
+  color: #e2e2e2;
+  font-size: 13px;
+  padding: 6px 10px;
+}
+.send-btn {
+  background: #2d2d2d;
+  border: none;
+  border-radius: 4px;
+  color: #686868;
+  font-size: 13px;
+  padding: 6px 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.send-btn:not(:disabled) {
+  background: #89b4fa;
+  color: #1a1a1a;
+  cursor: pointer;
+}
+.send-btn:disabled {
+  cursor: default;
+}

@@ -33,12 +33,26 @@ export interface Collection {
   url: string;
   services: GrpcService[];
   messages: GrpcMessage[];
+  fileDescriptors: string[];
+}
+
+export type NamedCollection = Collection & { name: string };
+
+export interface SendRequestArgs {
+  url: string;
+  serviceName: string;
+  methodName: string;
+  requestType: string;
+  responseType: string;
+  requestJson: string;
+  fileDescriptors: string[];
 }
 
 declare global {
   interface Window {
     grpcui: {
       connectServer: (url: string) => Promise<Collection>;
+      sendRequest: (args: SendRequestArgs) => Promise<unknown>;
     };
   }
 }

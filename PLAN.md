@@ -57,3 +57,4 @@
 - [ ] 38. Add "Copy response to clipboard" button in the Response panel
 - [ ] 39. When hovering over add Collection, highlight the button
 - [ ] 40. Add a trash icon next to each collection in the sidebar; clicking it prompts "Are you sure you want to delete this collection?" and if confirmed, deletes the collection and all its data
+- [ ] 41. Plan how to distribute the app via brew and/or as a downloadable binary from GitHub releases

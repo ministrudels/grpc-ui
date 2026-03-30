@@ -1,0 +1,94 @@
+import React, { useState } from "react";
+import AddCollectionDialog from "../AddCollectionDialog";
+import Collection from "../Collection";
+import type { GrpcMessage, GrpcMethod, GrpcService } from "../../global";
+import type { NamedCollection } from "../../global";
+import type { SelectedMethod } from "../../App";
+import "./styles.css";
+
+export type OnSelectMethod = (
+  collectionUrl: string,
+  service: GrpcService,
+  method: GrpcMethod,
+  messages: GrpcMessage[]
+) => void;
+
+interface Props {
+  collections: NamedCollection[];
+  onCollectionsChange: (next: NamedCollection[]) => void;
+  selectedMethod: SelectedMethod | null;
+  onSelectMethod: OnSelectMethod;
+}
+
+export default function Sidebar({ collections, onCollectionsChange, selectedMethod, onSelectMethod }: Props) {
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function handleResync(url: string) {
+    const existing = collections.find((c) => c.url === url);
+    if (!existing) return;
+    window.grpcui
+      .connectServer(url)
+      .then((fresh) => {
+        onCollectionsChange(
+          collections.map((c) => (c.url === url ? { ...fresh, name: existing.name } : c))
+        );
+      })
+      .catch((err: Error) => setError(err.message ?? "Failed to resync"));
+  }
+
+  function handleConfirm(name: string, url: string) {
+    setLoading(true);
+    setError(null);
+    window.grpcui
+      .connectServer(url)
+      .then((collection) => {
+        onCollectionsChange([...collections, { ...collection, name }]);
+      })
+      .catch((err: Error) => setError(err.message ?? "Failed to connect"))
+      .finally(() => setLoading(false));
+  }
+
+  return (
+    <div className="sidebar">
+      <button
+        className="sidebar-add-btn"
+        onClick={() => setDialogOpen(true)}
+        disabled={loading}
+      >
+        {loading ? (
+          <span className="sidebar-spinner">
+            <span className="sidebar-spinner-icon" />
+            Connecting…
+          </span>
+        ) : (
+          "+ Add Collection"
+        )}
+      </button>
+
+      {error && <span className="sidebar-error">{error}</span>}
+
+      {collections.length === 0 && !loading && (
+        <span>Collections will appear here</span>
+      )}
+
+      {collections.map((col) => (
+        <Collection
+          key={col.url}
+          collection={col}
+          selectedMethod={selectedMethod}
+          onSelectMethod={onSelectMethod}
+          onResync={handleResync}
+        />
+      ))}
+
+      {dialogOpen && (
+        <AddCollectionDialog
+          onClose={() => setDialogOpen(false)}
+          onConfirm={handleConfirm}
+        />
+      )}
+    </div>
+  );
+}

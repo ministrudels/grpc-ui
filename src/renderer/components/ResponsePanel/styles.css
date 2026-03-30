@@ -1,0 +1,30 @@
+.response-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.response-label {
+  color: #686868;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 6px 12px 4px;
+  border-bottom: 1px solid #2d2d2d;
+  flex-shrink: 0;
+}
+.response-body {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+  font-family: monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.response-pending { color: #4a4a4a; }
+.response-loading  { color: #686868; }
+.response-error    { color: #f38ba8; }
+.response-success  { color: #a6e3a1; }

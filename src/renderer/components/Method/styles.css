@@ -1,0 +1,17 @@
+.method {
+  color: #f0f0f0;
+  font-size: 12px;
+  padding: 2px 4px 2px 20px;
+  border-radius: 3px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.method:hover {
+  background: #242424;
+}
+.method.active {
+  background: #2d2d2d;
+  color: #e2e2e2;
+}

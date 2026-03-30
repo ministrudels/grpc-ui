@@ -3,14 +3,31 @@ import Sidebar from "./components/Sidebar";
 import AddressBar from "./components/AddressBar";
 import RequestBody from "./components/RequestBody";
 import ResponsePanel from "./components/ResponsePanel";
-import type { GrpcField, GrpcMessage, GrpcMethod, GrpcService } from "./global";
+import type { GrpcField, GrpcMessage, GrpcMethod, GrpcService, NamedCollection } from "./global";
 import type { OnSelectMethod } from "./components/Sidebar";
+
+export type { NamedCollection };
 
 export type SelectedMethod = {
   collectionUrl: string;
   service: GrpcService;
   method: GrpcMethod;
 };
+
+const STORAGE_KEY = "grpcui:collections";
+
+function loadCollections(): NamedCollection[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as NamedCollection[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveCollections(collections: NamedCollection[]): void {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(collections));
+}
 
 // ── Skeleton JSON generation ──────────────────────────────────────────────────
 
@@ -86,27 +103,76 @@ const styles: Record<string, React.CSSProperties> = {
 };
 
 export default function App() {
+  const [collections, setCollections] = useState<NamedCollection[]>(loadCollections);
   const [selectedMethod, setSelectedMethod] = useState<SelectedMethod | null>(null);
   const [requestBody, setRequestBody] = useState("");
+  const [response, setResponse] = useState<unknown>(null);
+  const [responseError, setResponseError] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+
+  function handleCollectionsChange(next: NamedCollection[]) {
+    saveCollections(next);
+    setCollections(next);
+  }
 
   const handleSelectMethod: OnSelectMethod = (collectionUrl, service, method, messages) => {
     setSelectedMethod({ collectionUrl, service, method });
+    setResponse(null);
+    setResponseError(null);
     const skeleton = buildSkeleton(method.requestType, messages);
     setRequestBody(JSON.stringify(skeleton, null, 2));
   };
 
+  async function handleSend() {
+    if (!selectedMethod || sending) return;
+    const col = collections.find((c) => c.url === selectedMethod.collectionUrl);
+    if (!col?.fileDescriptors?.length) {
+      setResponseError("No schema available — resync the collection first.");
+      return;
+    }
+    setSending(true);
+    setResponse(null);
+    setResponseError(null);
+    try {
+      const res = await window.grpcui.sendRequest({
+        url: selectedMethod.collectionUrl,
+        serviceName: selectedMethod.service.name,
+        methodName: selectedMethod.method.name,
+        requestType: selectedMethod.method.requestType,
+        responseType: selectedMethod.method.responseType,
+        requestJson: requestBody,
+        fileDescriptors: col.fileDescriptors,
+      });
+      setResponse(res);
+    } catch (err: unknown) {
+      setResponseError((err as Error).message ?? "Request failed");
+    } finally {
+      setSending(false);
+    }
+  }
+
   return (
     <div style={styles.app}>
-      <Sidebar selectedMethod={selectedMethod} onSelectMethod={handleSelectMethod} />
+      <Sidebar
+        collections={collections}
+        onCollectionsChange={handleCollectionsChange}
+        selectedMethod={selectedMethod}
+        onSelectMethod={handleSelectMethod}
+      />
       <div style={styles.main}>
         <div style={styles.topRow}>
-          <AddressBar url={selectedMethod?.collectionUrl ?? ""} />
+          <AddressBar
+            url={selectedMethod?.collectionUrl ?? ""}
+            canSend={!!selectedMethod && !sending}
+            sending={sending}
+            onSend={handleSend}
+          />
         </div>
         <div style={styles.panels}>
           {selectedMethod ? (
             <>
               <RequestBody value={requestBody} onChange={setRequestBody} />
-              <ResponsePanel />
+              <ResponsePanel response={response} error={responseError} loading={sending} />
             </>
           ) : (
             <div style={styles.placeholder}>Select a method from the sidebar to get started</div>

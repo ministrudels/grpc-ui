@@ -1,0 +1,25 @@
+.service-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  user-select: none;
+  padding: 2px 0 2px 8px;
+}
+.service-name {
+  color: #aaaaaa;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+.service-chevron {
+  color: #686868;
+  font-size: 9px;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+.service-chevron.open {
+  transform: rotate(90deg);
+}
