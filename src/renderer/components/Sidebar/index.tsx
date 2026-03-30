@@ -20,6 +20,12 @@ interface Props {
   onSelectMethod: OnSelectMethod;
 }
 
+/**
+ * Left-hand navigation panel. Owns the "Add Collection" flow — prompts for
+ * a name and server URL, calls window.grpcui.connectServer via gRPC
+ * reflection, and notifies the parent of collection changes so they are
+ * persisted to localStorage. Renders a Collection tree for each saved server.
+ */
 export default function Sidebar({ collections, onCollectionsChange, selectedMethod, onSelectMethod }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);

@@ -19,6 +19,12 @@ interface Props {
   onResync: (url: string) => void;
 }
 
+/**
+ * A collapsible collection header that groups one or more gRPC services
+ * discovered from a single server URL. Includes a resync button (↻) that
+ * triggers a fresh reflection call against the original URL to pick up any
+ * schema changes.
+ */
 export default function Collection({ collection, selectedMethod, onSelectMethod, onResync }: Props) {
   const [open, setOpen] = useState(true);
   const [syncing, setSyncing] = useState(false);

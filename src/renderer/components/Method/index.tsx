@@ -8,6 +8,11 @@ interface Props {
   onClick: () => void;
 }
 
+/**
+ * A single RPC method row in the sidebar.
+ * Renders the method name, highlights the active selection, and delegates
+ * click events to the parent. Hover styling is handled entirely in CSS.
+ */
 export default function Method({ method, active, onClick }: Props) {
   return (
     <div

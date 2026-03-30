@@ -13,6 +13,12 @@ interface Props {
   onSelectMethod: OnSelectMethod;
 }
 
+/**
+ * A collapsible service group within a collection.
+ * Lists all RPC methods belonging to the service and passes selection events
+ * up via onSelectMethod, forwarding the message definitions needed to build
+ * a skeleton request body.
+ */
 export default function Service({ service, collectionUrl, messages, selectedMethod, onSelectMethod }: Props) {
   const [open, setOpen] = useState(true);
 

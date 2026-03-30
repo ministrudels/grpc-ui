@@ -6,6 +6,11 @@ interface Props {
   onConfirm: (name: string, url: string) => void;
 }
 
+/**
+ * Modal dialog for adding a new collection. Collects a display name and
+ * server URL, then calls onConfirm. Closes on Escape, backdrop click, or
+ * Cancel. Submits on Enter or the Connect button.
+ */
 export default function AddCollectionDialog({ onClose, onConfirm }: Props) {
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");

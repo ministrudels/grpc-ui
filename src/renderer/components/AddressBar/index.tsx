@@ -8,6 +8,11 @@ interface Props {
   onSend: () => void;
 }
 
+/**
+ * Top bar showing the target server URL for the selected method alongside
+ * the Send button. The button is enabled only when a method is selected and
+ * no request is in flight, and switches to a "Sending…" label during loading.
+ */
 export default function AddressBar({ url, canSend, sending, onSend }: Props) {
   return (
     <div className="address-bar">

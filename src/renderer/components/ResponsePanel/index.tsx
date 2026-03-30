@@ -7,6 +7,12 @@ interface Props {
   loading: boolean;
 }
 
+/**
+ * Right half of the main panels area. Displays the result of the last RPC
+ * call: a loading indicator while the request is in flight, a red error
+ * message on failure, pretty-printed green JSON on success, or a muted
+ * placeholder when no call has been made yet.
+ */
 export default function ResponsePanel({ response, error, loading }: Props) {
   let contentClass: string;
   let content: React.ReactNode;

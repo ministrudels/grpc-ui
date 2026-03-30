@@ -6,6 +6,11 @@ interface Props {
   onChange: (value: string) => void;
 }
 
+/**
+ * Left half of the main panels area. Provides a free-form textarea for
+ * editing the JSON request payload. Pre-populated with a skeleton derived
+ * from the selected method's input message definition when a method is chosen.
+ */
 export default function RequestBody({ value, onChange }: Props) {
   return (
     <div className="request-body">
