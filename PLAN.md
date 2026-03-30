@@ -53,8 +53,8 @@
 - [ ] 34. Colour-code kinds of gRPC methods (unary, client-streaming, server-streaming, bidi-streaming) in the sidebar
 - [ ] 35. Use a syntax-highlighting code editor component instead of a plain `<textarea>` for request bodies
 - [ ] 36. End to end tests for sending requests and displaying responses (mock gRPC server in test fixture that serves canned responses based on request content). This is a big task and can be deferred until after the MVP is stable.
-- [ ] 37. Add keyboard shortcut cmd + enter to send request
+- [x] 37. Add keyboard shortcut cmd + enter to send request
 - [ ] 38. Add "Copy response to clipboard" button in the Response panel
-- [ ] 39. When hovering over add Collection, highlight the button
-- [ ] 40. Add a trash icon next to each collection in the sidebar; clicking it prompts "Are you sure you want to delete this collection?" and if confirmed, deletes the collection and all its data
+- [x] 39. When hovering over add Collection, highlight the button
+- [x] 40. Add a trash icon next to each collection in the sidebar; clicking it prompts "Are you sure you want to delete this collection?" and if confirmed, deletes the collection and all its data
 - [ ] 41. Plan how to distribute the app via brew and/or as a downloadable binary from GitHub releases

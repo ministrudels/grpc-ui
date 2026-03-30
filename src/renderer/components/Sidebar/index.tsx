@@ -31,6 +31,10 @@ export default function Sidebar({ collections, onCollectionsChange, selectedMeth
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  function handleDelete(url: string) {
+    onCollectionsChange(collections.filter((c) => c.url !== url));
+  }
+
   function handleResync(url: string) {
     const existing = collections.find((c) => c.url === url);
     if (!existing) return;
@@ -86,6 +90,7 @@ export default function Sidebar({ collections, onCollectionsChange, selectedMeth
           selectedMethod={selectedMethod}
           onSelectMethod={onSelectMethod}
           onResync={handleResync}
+          onDelete={handleDelete}
         />
       ))}
 

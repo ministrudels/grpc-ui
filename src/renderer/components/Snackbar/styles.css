@@ -1,0 +1,20 @@
+.snackbar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2d2d2d;
+  color: #e2e2e2;
+  font-size: 13px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid #3a3a3a;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+  white-space: nowrap;
+  z-index: 200;
+}
+.snackbar.hidden {
+  opacity: 0;
+}

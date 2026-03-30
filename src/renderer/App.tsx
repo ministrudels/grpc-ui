@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Sidebar from "./components/Sidebar";
 import AddressBar from "./components/AddressBar";
 import RequestBody from "./components/RequestBody";
 import ResponsePanel from "./components/ResponsePanel";
+import Snackbar from "./components/Snackbar";
 import type { GrpcField, GrpcMessage, GrpcMethod, GrpcService, NamedCollection } from "./global";
 import type { OnSelectMethod } from "./components/Sidebar";
 
@@ -109,11 +110,34 @@ export default function App() {
   const [response, setResponse] = useState<unknown>(null);
   const [responseError, setResponseError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const [snackbar, setSnackbar] = useState<{ message: string; visible: boolean }>({ message: "", visible: false });
+  const snackbarTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function showSnackbar(message: string) {
+    if (snackbarTimer.current) clearTimeout(snackbarTimer.current);
+    setSnackbar({ message, visible: true });
+    snackbarTimer.current = setTimeout(() => setSnackbar((s) => ({ ...s, visible: false })), 2500);
+  }
 
   function handleCollectionsChange(next: NamedCollection[]) {
     saveCollections(next);
     setCollections(next);
   }
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (!(e.key === "Enter" && e.metaKey)) return;
+      if (!selectedMethod) {
+        showSnackbar("Select a method before sending");
+      } else if (sending) {
+        showSnackbar("A request is already in flight");
+      } else {
+        handleSend();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  });
 
   const handleSelectMethod: OnSelectMethod = (collectionUrl, service, method, messages) => {
     setSelectedMethod({ collectionUrl, service, method });
@@ -179,6 +203,7 @@ export default function App() {
           )}
         </div>
       </div>
+      <Snackbar message={snackbar.message} visible={snackbar.visible} />
     </div>
   );
 }

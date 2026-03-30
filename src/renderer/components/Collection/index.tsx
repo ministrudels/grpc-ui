@@ -17,15 +17,15 @@ interface Props {
   selectedMethod: SelectedMethod | null;
   onSelectMethod: OnSelectMethod;
   onResync: (url: string) => void;
+  onDelete: (url: string) => void;
 }
 
 /**
  * A collapsible collection header that groups one or more gRPC services
- * discovered from a single server URL. Includes a resync button (↻) that
- * triggers a fresh reflection call against the original URL to pick up any
- * schema changes.
+ * discovered from a single server URL. Includes a resync button (↻) and a
+ * trash button that prompts for confirmation before deleting the collection.
  */
-export default function Collection({ collection, selectedMethod, onSelectMethod, onResync }: Props) {
+export default function Collection({ collection, selectedMethod, onSelectMethod, onResync, onDelete }: Props) {
   const [open, setOpen] = useState(true);
   const [syncing, setSyncing] = useState(false);
 
@@ -36,18 +36,30 @@ export default function Collection({ collection, selectedMethod, onSelectMethod,
     setTimeout(() => setSyncing(false), 600);
   }
 
+  function handleDelete(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (window.confirm(`Delete "${collection.name}"?`)) {
+      onDelete(collection.url);
+    }
+  }
+
   return (
     <div>
       <div className="collection-header" title={collection.url} onClick={() => setOpen((o) => !o)}>
         <span className={`collection-chevron${open ? " open" : ""}`}>▶</span>
         <span className="collection-name">{collection.name}</span>
-        <button
-          className={`resync-btn${syncing ? " syncing" : ""}`}
-          title={`Resync ${collection.url}`}
-          onClick={handleResync}
-        >
-          ↻
-        </button>
+        <div className="collection-actions">
+          <button
+            className={`resync-btn${syncing ? " syncing" : ""}`}
+            title={`Resync ${collection.url}`}
+            onClick={handleResync}
+          >
+            ↻
+          </button>
+          <button className="delete-btn" title="Delete collection" onClick={handleDelete}>
+            🗑
+          </button>
+        </div>
       </div>
 
       {open && collection.services.map((svc) => (

@@ -26,6 +26,12 @@
 .collection-chevron.open {
   transform: rotate(90deg);
 }
+.collection-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
 .resync-btn {
   background: none;
   border: none;
@@ -38,4 +44,17 @@
 }
 .resync-btn.syncing {
   animation: spin 0.7s linear infinite;
+}
+.delete-btn {
+  background: none;
+  border: none;
+  color: #686868;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 0 2px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.delete-btn:hover {
+  color: #f38ba8;
 }
