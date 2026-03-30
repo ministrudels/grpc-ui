@@ -1,6 +1,6 @@
 import { app, BrowserWindow, ipcMain } from "electron";
 import path from "path";
-import { discoverServices } from "./reflection-client";
+import { discoverServices, sendRequest } from "./grpc-client";
 
 function createWindow(): void {
   const win = new BrowserWindow({
@@ -22,6 +22,10 @@ function createWindow(): void {
 
 ipcMain.handle("grpc:connect-server", async (_event, url: string) => {
   return discoverServices(url);
+});
+
+ipcMain.handle("grpc:send-request", async (_event, args) => {
+  return sendRequest(args);
 });
 
 app.whenReady().then(createWindow);

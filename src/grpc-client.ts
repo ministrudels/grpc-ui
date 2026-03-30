@@ -1,5 +1,6 @@
 import * as grpc from "@grpc/grpc-js";
 import * as protobuf from "protobufjs";
+import "protobufjs/ext/descriptor";
 import * as fs from "fs";
 import path from "path";
 
@@ -56,6 +57,18 @@ export interface Collection {
   services: GrpcService[];
   /** All message types discovered — used to generate skeleton JSON */
   messages: GrpcMessage[];
+  /** Raw FileDescriptorProto bytes (base64) — used to invoke methods */
+  fileDescriptors: string[];
+}
+
+export interface SendRequestArgs {
+  url: string;
+  serviceName: string;
+  methodName: string;
+  requestType: string;
+  responseType: string;
+  requestJson: string;
+  fileDescriptors: string[];
 }
 
 // ── Reflection client constructors ───────────────────────────────────────────
@@ -112,6 +125,8 @@ interface RawDescriptor {
 interface RawFileDescriptor {
   name?: string;
   package?: string;
+  /** Imported proto file names, e.g. ["google/protobuf/empty.proto"] */
+  dependency?: string[];
   messageType?: RawDescriptor[];
   service?: Array<{
     name?: string;
@@ -187,7 +202,10 @@ function runReflection(url: string, ClientCtor: grpc.ServiceClientConstructor): 
     const call = (client as any).ServerReflectionInfo({ deadline });
     const allServices: GrpcService[] = [];
     const allMessages: GrpcMessage[] = [];
+    const allFileDescriptors: string[] = [];
     const seenFiles = new Set<string>();
+    // Tracks files already requested via fileByFilename to avoid duplicate requests
+    const requestedFiles = new Set<string>();
     let pendingSymbols = 0;
     let listDone = false;
 
@@ -199,7 +217,56 @@ function runReflection(url: string, ClientCtor: grpc.ServiceClientConstructor): 
       for (const s of allServices) {
         if (!unique.has(s.name)) unique.set(s.name, s);
       }
-      resolve({ url, services: Array.from(unique.values()), messages: allMessages });
+      resolve({
+        url,
+        services: Array.from(unique.values()),
+        messages: allMessages,
+        fileDescriptors: allFileDescriptors,
+      });
+    }
+
+    // Process a batch of FileDescriptorProto bytes from a single response.
+    // Adds new (unseen) files to allFileDescriptors and requests any transitive
+    // dependency files the server omitted.
+    function processFileDescriptors(protos: Uint8Array[]) {
+      const batchDeps: string[] = [];
+
+      for (const raw of protos) {
+        const buf = Buffer.isBuffer(raw) ? raw : Buffer.from(raw);
+
+        // Collect declared imports before parseFileDescriptor mutates seenFiles
+        try {
+          const fd = FileDescriptorProtoType.toObject(
+            FileDescriptorProtoType.decode(buf),
+            { defaults: true, arrays: true }
+          ) as RawFileDescriptor;
+          batchDeps.push(...(fd.dependency ?? []));
+        } catch {
+          // If we can't decode deps, ignore — parseFileDescriptor will log the error
+        }
+
+        try {
+          const parsed = parseFileDescriptor(buf, seenFiles);
+          if (parsed) {
+            // Only push unique files (parseFileDescriptor returns null for duplicates)
+            allFileDescriptors.push(buf.toString("base64"));
+            allServices.push(...parsed.services);
+            allMessages.push(...parsed.messages);
+          }
+        } catch (e) {
+          console.error("Failed to decode FileDescriptorProto:", e);
+        }
+      }
+
+      // After the whole batch is processed (seenFiles is up to date), request
+      // any dependency files the server didn't include in this response.
+      for (const dep of batchDeps) {
+        if (!seenFiles.has(dep) && !requestedFiles.has(dep)) {
+          requestedFiles.add(dep);
+          pendingSymbols++;
+          call.write({ fileByFilename: dep });
+        }
+      }
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -218,18 +285,7 @@ function runReflection(url: string, ClientCtor: grpc.ServiceClientConstructor): 
 
       } else if (response.fileDescriptorResponse) {
         const protos: Uint8Array[] = response.fileDescriptorResponse.fileDescriptorProto ?? [];
-        for (const raw of protos) {
-          const buf = Buffer.isBuffer(raw) ? raw : Buffer.from(raw);
-          try {
-            const parsed = parseFileDescriptor(buf, seenFiles);
-            if (parsed) {
-              allServices.push(...parsed.services);
-              allMessages.push(...parsed.messages);
-            }
-          } catch (e) {
-            console.error("Failed to decode FileDescriptorProto:", e);
-          }
-        }
+        processFileDescriptors(protos);
         pendingSymbols--;
         maybeFinish();
 
@@ -245,7 +301,7 @@ function runReflection(url: string, ClientCtor: grpc.ServiceClientConstructor): 
   });
 }
 
-// ── Main export ───────────────────────────────────────────────────────────────
+// ── discoverServices ──────────────────────────────────────────────────────────
 
 export async function discoverServices(url: string): Promise<Collection> {
   try {
@@ -256,4 +312,52 @@ export async function discoverServices(url: string): Promise<Collection> {
     }
     throw err;
   }
+}
+
+// ── sendRequest ───────────────────────────────────────────────────────────────
+
+export async function sendRequest(args: SendRequestArgs): Promise<unknown> {
+  const { url, serviceName, methodName, requestType, responseType, requestJson, fileDescriptors } = args;
+
+  // Re-encode individual FileDescriptorProtos into a FileDescriptorSet binary so
+  // protobufjs/ext/descriptor can build a fully-resolved Root from them.
+  // FileDescriptorSet = { repeated FileDescriptorProto file = 1; }
+  // We write each proto as field 1 (tag 0x0a), length-delimited.
+  const writer = protobuf.Writer.create();
+  for (const b64 of fileDescriptors) {
+    writer.uint32(/* field 1, wire type 2 */ 10).bytes(Buffer.from(b64, "base64"));
+  }
+  const fileSetBytes = Buffer.from(writer.finish());
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const root: protobuf.Root = (protobuf.Root as any).fromDescriptor(fileSetBytes);
+  root.resolveAll();
+
+  // Strip leading dot — proto fully-qualified names like ".pkg.Foo" and "pkg.Foo" both valid
+  const RequestType = root.lookupType(requestType.replace(/^\./, ""));
+  const ResponseType = root.lookupType(responseType.replace(/^\./, ""));
+
+  const requestObj = JSON.parse(requestJson) as Record<string, unknown>;
+  const requestMessage = RequestType.fromObject(requestObj);
+  const requestBytes = Buffer.from(RequestType.encode(requestMessage).finish());
+
+  const client = new grpc.Client(url, grpc.credentials.createInsecure());
+
+  return new Promise((resolve, reject) => {
+    const deadline = new Date(Date.now() + 30_000);
+    client.makeUnaryRequest(
+      `/${serviceName}/${methodName}`,
+      (req: Buffer) => req,
+      (buf: Buffer) =>
+        ResponseType.toObject(ResponseType.decode(buf), { defaults: true, arrays: true }),
+      requestBytes,
+      new grpc.Metadata(),
+      { deadline },
+      (err, response) => {
+        client.close();
+        if (err) reject(err);
+        else resolve(response);
+      }
+    );
+  });
 }

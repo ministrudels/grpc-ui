@@ -26,7 +26,7 @@ const GREETER_PROTO = path.join(__dirname, "fixtures/greeter.proto");
 
 async function startServer(
   setupReflection: (server: grpc.Server, packageDef: protoLoader.PackageDefinition) => void,
-  sayHelloImpl?: (call: grpc.ServerUnaryCall<unknown, unknown>, callback: grpc.sendUnaryData<unknown>) => void
+  sayHelloImpl?: (call: grpc.ServerUnaryCall<unknown, unknown>, callback: grpc.sendUnaryData<unknown>) => void,
 ): Promise<{ server: grpc.Server; port: number }> {
   const packageDef = protoLoader.loadSync(GREETER_PROTO, {
     keepCase: false,
@@ -48,10 +48,8 @@ async function startServer(
   setupReflection(server, packageDef);
 
   const port = await new Promise<number>((resolve, reject) => {
-    server.bindAsync(
-      "0.0.0.0:0",
-      grpc.ServerCredentials.createInsecure(),
-      (err, p) => (err ? reject(err) : resolve(p))
+    server.bindAsync("0.0.0.0:0", grpc.ServerCredentials.createInsecure(), (err, p) =>
+      err ? reject(err) : resolve(p),
     );
   });
 
@@ -64,9 +62,7 @@ function assertGreeterCollection(collection: Awaited<ReturnType<typeof discoverS
 
   // Reflection services must be filtered out — they are internal protocol
   // details and should never appear as user-visible collection entries.
-  const reflectionServices = collection.services.filter((s) =>
-    s.name.startsWith("grpc.reflection.")
-  );
+  const reflectionServices = collection.services.filter((s) => s.name.startsWith("grpc.reflection."));
   expect(reflectionServices).toHaveLength(0);
 
   // The Greeter service must be present
@@ -102,7 +98,7 @@ describe("against a modern server — v1 reflection only", () => {
     }));
   });
 
-  afterAll(() => new Promise<void>((resolve, reject) => server.tryShutdown((err) => err ? reject(err) : resolve())));
+  afterAll(() => new Promise<void>((resolve, reject) => server.tryShutdown((err) => (err ? reject(err) : resolve()))));
 
   it("discovers the Greeter service and its methods", async () => {
     const collection = await discoverServices(`localhost:${port}`);
@@ -111,9 +107,7 @@ describe("against a modern server — v1 reflection only", () => {
 
   it("does not include reflection services in the collection", async () => {
     const collection = await discoverServices(`localhost:${port}`);
-    const reflectionServices = collection.services.filter((s) =>
-      s.name.startsWith("grpc.reflection.")
-    );
+    const reflectionServices = collection.services.filter((s) => s.name.startsWith("grpc.reflection."));
     expect(reflectionServices).toHaveLength(0);
   });
 });
@@ -134,7 +128,7 @@ describe("against an older server — v1alpha reflection only", () => {
     }));
   });
 
-  afterAll(() => new Promise<void>((resolve, reject) => server.tryShutdown((err) => err ? reject(err) : resolve())));
+  afterAll(() => new Promise<void>((resolve, reject) => server.tryShutdown((err) => (err ? reject(err) : resolve()))));
 
   it("discovers the Greeter service and its methods", async () => {
     const collection = await discoverServices(`localhost:${port}`);
@@ -143,9 +137,7 @@ describe("against an older server — v1alpha reflection only", () => {
 
   it("does not include reflection services in the collection", async () => {
     const collection = await discoverServices(`localhost:${port}`);
-    const reflectionServices = collection.services.filter((s) =>
-      s.name.startsWith("grpc.reflection.")
-    );
+    const reflectionServices = collection.services.filter((s) => s.name.startsWith("grpc.reflection."));
     expect(reflectionServices).toHaveLength(0);
   });
 });
@@ -161,7 +153,7 @@ describe("against a server without reflection", () => {
     ({ server, port } = await startServer(() => {}));
   });
 
-  afterAll(() => new Promise<void>((resolve, reject) => server.tryShutdown((err) => err ? reject(err) : resolve())));
+  afterAll(() => new Promise<void>((resolve, reject) => server.tryShutdown((err) => (err ? reject(err) : resolve()))));
 
   it("rejects with an error", async () => {
     await expect(discoverServices(`localhost:${port}`)).rejects.toThrow();
@@ -185,11 +177,11 @@ describe("end-to-end: discover services then invoke a method", () => {
       (call, callback) => {
         const req = call.request as { name: string };
         callback(null, { message: `Hello ${req.name}` });
-      }
+      },
     ));
   });
 
-  afterAll(() => new Promise<void>((resolve, reject) => server.tryShutdown((err) => err ? reject(err) : resolve())));
+  afterAll(() => new Promise<void>((resolve, reject) => server.tryShutdown((err) => (err ? reject(err) : resolve()))));
 
   it("returns the response from a unary call", async () => {
     const url = `localhost:${port}`;
@@ -224,7 +216,7 @@ describe("end-to-end: discover services then invoke a method", () => {
         responseType: "helloworld.HelloReply",
         requestJson: JSON.stringify({ name: "World" }),
         fileDescriptors: collection.fileDescriptors,
-      })
+      }),
     ).rejects.toThrow();
   });
 
