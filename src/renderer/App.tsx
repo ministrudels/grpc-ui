@@ -50,18 +50,30 @@ function buildSkeleton(
 
 function fieldDefault(field: GrpcField, messages: GrpcMessage[], visited: Set<string>): unknown {
   switch (field.type) {
-    case "TYPE_STRING": return "";
-    case "TYPE_BOOL":   return false;
-    case "TYPE_BYTES":  return "";
-    case "TYPE_DOUBLE": case "TYPE_FLOAT":
-    case "TYPE_INT32":  case "TYPE_INT64":
-    case "TYPE_UINT32": case "TYPE_UINT64":
-    case "TYPE_SINT32": case "TYPE_SINT64":
-    case "TYPE_FIXED32": case "TYPE_FIXED64":
-    case "TYPE_SFIXED32": case "TYPE_SFIXED64":
-    case "TYPE_ENUM":   return 0;
-    case "TYPE_MESSAGE": return buildSkeleton(field.typeName, messages, visited);
-    default:            return null;
+    case "TYPE_STRING":
+      return "";
+    case "TYPE_BOOL":
+      return false;
+    case "TYPE_BYTES":
+      return "";
+    case "TYPE_DOUBLE":
+    case "TYPE_FLOAT":
+    case "TYPE_INT32":
+    case "TYPE_INT64":
+    case "TYPE_UINT32":
+    case "TYPE_UINT64":
+    case "TYPE_SINT32":
+    case "TYPE_SINT64":
+    case "TYPE_FIXED32":
+    case "TYPE_FIXED64":
+    case "TYPE_SFIXED32":
+    case "TYPE_SFIXED64":
+    case "TYPE_ENUM":
+      return 0;
+    case "TYPE_MESSAGE":
+      return buildSkeleton(field.typeName, messages, visited);
+    default:
+      return null;
   }
 }
 
@@ -72,13 +84,13 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     height: "100vh",
     background: "#1a1a1a",
-    color: "#e2e2e2",
+    color: "#e2e2e2"
   },
   main: {
     flex: 1,
     display: "flex",
     flexDirection: "column",
-    minWidth: 0,
+    minWidth: 0
   },
   topRow: {
     display: "flex",
@@ -86,12 +98,12 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 8,
     padding: "8px 12px",
     borderBottom: "1px solid #2d2d2d",
-    flexShrink: 0,
+    flexShrink: 0
   },
   panels: {
     flex: 1,
     display: "flex",
-    minHeight: 0,
+    minHeight: 0
   },
   placeholder: {
     flex: 1,
@@ -99,8 +111,8 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     justifyContent: "center",
     color: "#4a4a4a",
-    fontSize: 14,
-  },
+    fontSize: 14
+  }
 };
 
 export default function App() {
@@ -165,7 +177,7 @@ export default function App() {
         requestType: selectedMethod.method.requestType,
         responseType: selectedMethod.method.responseType,
         requestJson: requestBody,
-        fileDescriptors: col.fileDescriptors,
+        fileDescriptors: col.fileDescriptors
       });
       setResponse(res);
     } catch (err: unknown) {

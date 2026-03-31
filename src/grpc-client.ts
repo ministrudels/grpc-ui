@@ -7,12 +7,10 @@ import path from "path";
 function findProtoDir(): string {
   const candidates = [
     path.join(__dirname, "../../src/proto"), // dev: dist/main/ → src/proto/ (always up to date)
-    path.join(__dirname, "../proto"),        // production build: dist/main/ → dist/proto/
-    path.join(__dirname, "proto"),           // vitest: src/ → src/proto/
+    path.join(__dirname, "../proto"), // production build: dist/main/ → dist/proto/
+    path.join(__dirname, "proto") // vitest: src/ → src/proto/
   ];
-  const found = candidates.find((dir) =>
-    fs.existsSync(path.join(dir, "reflection_v1alpha.proto"))
-  );
+  const found = candidates.find((dir) => fs.existsSync(path.join(dir, "reflection_v1alpha.proto")));
   if (!found) {
     throw new Error(`Proto directory not found. Searched: ${candidates.join(", ")}`);
   }
@@ -84,15 +82,11 @@ function makeReflectionClientCtor(protoFile: string, pkg: string) {
         path: `/${pkg}.ServerReflection/ServerReflectionInfo`,
         requestStream: true,
         responseStream: true,
-        requestSerialize: (req: object) =>
-          Buffer.from(ReqType.encode(ReqType.fromObject(req)).finish()),
-        requestDeserialize: (buf: Buffer) =>
-          ReqType.toObject(ReqType.decode(buf), { defaults: true, arrays: true }),
-        responseSerialize: (res: object) =>
-          Buffer.from(ResType.encode(ResType.fromObject(res)).finish()),
-        responseDeserialize: (buf: Buffer) =>
-          ResType.toObject(ResType.decode(buf), { defaults: true, arrays: true }),
-      },
+        requestSerialize: (req: object) => Buffer.from(ReqType.encode(ReqType.fromObject(req)).finish()),
+        requestDeserialize: (buf: Buffer) => ReqType.toObject(ReqType.decode(buf), { defaults: true, arrays: true }),
+        responseSerialize: (res: object) => Buffer.from(ResType.encode(ResType.fromObject(res)).finish()),
+        responseDeserialize: (buf: Buffer) => ResType.toObject(ResType.decode(buf), { defaults: true, arrays: true })
+      }
     },
     "ServerReflection"
   );
@@ -100,7 +94,7 @@ function makeReflectionClientCtor(protoFile: string, pkg: string) {
 
 const ClientCtors = {
   v1alpha: makeReflectionClientCtor("reflection_v1alpha.proto", "grpc.reflection.v1alpha"),
-  v1:      makeReflectionClientCtor("reflection_v1.proto",      "grpc.reflection.v1"),
+  v1: makeReflectionClientCtor("reflection_v1.proto", "grpc.reflection.v1")
 };
 
 // ── FileDescriptorProto parsing ───────────────────────────────────────────────
@@ -144,10 +138,11 @@ function parseFileDescriptor(
   bytes: Buffer,
   seenFiles: Set<string>
 ): { services: GrpcService[]; messages: GrpcMessage[] } | null {
-  const fd = FileDescriptorProtoType.toObject(
-    FileDescriptorProtoType.decode(bytes),
-    { defaults: true, arrays: true, enums: String }
-  ) as RawFileDescriptor;
+  const fd = FileDescriptorProtoType.toObject(FileDescriptorProtoType.decode(bytes), {
+    defaults: true,
+    arrays: true,
+    enums: String
+  }) as RawFileDescriptor;
 
   if (!fd.name || seenFiles.has(fd.name)) return null;
   seenFiles.add(fd.name);
@@ -161,8 +156,8 @@ function parseFileDescriptor(
       requestType: (m.inputType ?? "").replace(/^\./, ""),
       responseType: (m.outputType ?? "").replace(/^\./, ""),
       clientStreaming: m.clientStreaming ?? false,
-      serverStreaming: m.serverStreaming ?? false,
-    })),
+      serverStreaming: m.serverStreaming ?? false
+    }))
   }));
 
   const messages = parseDescriptors(fd.messageType ?? [], pkg);
@@ -181,8 +176,8 @@ function parseDescriptors(descriptors: RawDescriptor[], scope: string): GrpcMess
         number: f.number ?? 0,
         type: typeof f.type === "string" ? f.type : `TYPE_${f.type}`,
         typeName: (f.typeName ?? "").replace(/^\./, ""),
-        repeated: f.label === "LABEL_REPEATED" || f.label === 3,
-      })),
+        repeated: f.label === "LABEL_REPEATED" || f.label === 3
+      }))
     });
     if (desc.nestedType?.length) {
       result.push(...parseDescriptors(desc.nestedType, fullName));
@@ -204,8 +199,9 @@ function runReflection(url: string, ClientCtor: grpc.ServiceClientConstructor): 
     const allMessages: GrpcMessage[] = [];
     const allFileDescriptors: string[] = [];
     const seenFiles = new Set<string>();
-    // Tracks files already requested via fileByFilename to avoid duplicate requests
     const requestedFiles = new Set<string>();
+    // Symbols (service or type names) already requested via fileContainingSymbol
+    const requestedSymbols = new Set<string>();
     let pendingSymbols = 0;
     let listDone = false;
 
@@ -221,50 +217,50 @@ function runReflection(url: string, ClientCtor: grpc.ServiceClientConstructor): 
         url,
         services: Array.from(unique.values()),
         messages: allMessages,
-        fileDescriptors: allFileDescriptors,
+        fileDescriptors: allFileDescriptors
       });
     }
 
-    // Process a batch of FileDescriptorProto bytes from a single response.
-    // Adds new (unseen) files to allFileDescriptors and requests any transitive
-    // dependency files the server omitted.
-    function processFileDescriptors(protos: Uint8Array[]) {
-      const batchDeps: string[] = [];
+    // Request a symbol (type or service name) if not already requested.
+    function requestSymbol(name: string) {
+      if (!name || requestedSymbols.has(name)) return;
+      requestedSymbols.add(name);
+      pendingSymbols++;
+      call.write({ fileContainingSymbol: name });
+    }
 
+    // Process a batch of FileDescriptorProto bytes from a single response.
+    // Adds new files to allFileDescriptors and recursively requests any type
+    // symbols not yet covered (handles servers with empty dependency fields).
+    function processFileDescriptors(protos: Uint8Array[]) {
       for (const raw of protos) {
         const buf = Buffer.isBuffer(raw) ? raw : Buffer.from(raw);
-
-        // Collect declared imports before parseFileDescriptor mutates seenFiles
-        try {
-          const fd = FileDescriptorProtoType.toObject(
-            FileDescriptorProtoType.decode(buf),
-            { defaults: true, arrays: true }
-          ) as RawFileDescriptor;
-          batchDeps.push(...(fd.dependency ?? []));
-        } catch {
-          // If we can't decode deps, ignore — parseFileDescriptor will log the error
-        }
-
         try {
           const parsed = parseFileDescriptor(buf, seenFiles);
-          if (parsed) {
-            // Only push unique files (parseFileDescriptor returns null for duplicates)
-            allFileDescriptors.push(buf.toString("base64"));
-            allServices.push(...parsed.services);
-            allMessages.push(...parsed.messages);
-          }
-        } catch (e) {
-          console.error("Failed to decode FileDescriptorProto:", e);
-        }
-      }
+          if (!parsed) continue;
+          allFileDescriptors.push(buf.toString("base64"));
+          allServices.push(...parsed.services);
+          allMessages.push(...parsed.messages);
 
-      // After the whole batch is processed (seenFiles is up to date), request
-      // any dependency files the server didn't include in this response.
-      for (const dep of batchDeps) {
-        if (!seenFiles.has(dep) && !requestedFiles.has(dep)) {
-          requestedFiles.add(dep);
-          pendingSymbols++;
-          call.write({ fileByFilename: dep });
+          // Chase method input/output types
+          for (const svc of parsed.services) {
+            for (const method of svc.methods) {
+              requestSymbol(method.requestType);
+              requestSymbol(method.responseType);
+            }
+          }
+
+          // Chase TYPE_MESSAGE field types in message definitions so that
+          // resolveAll() can resolve the full type graph
+          for (const msg of parsed.messages) {
+            for (const field of msg.fields) {
+              if (field.type === "TYPE_MESSAGE" && field.typeName) {
+                requestSymbol(field.typeName);
+              }
+            }
+          }
+        } catch {
+          // ignore malformed descriptors
         }
       }
     }
@@ -272,31 +268,35 @@ function runReflection(url: string, ClientCtor: grpc.ServiceClientConstructor): 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     call.on("data", (response: any) => {
       if (response.listServicesResponse) {
-        const names: string[] = (
-          response.listServicesResponse.service as Array<{ name: string }>
-        )
+        const names: string[] = (response.listServicesResponse.service as Array<{ name: string }>)
           .map((s) => s.name)
           .filter((n) => !n.startsWith("grpc.reflection."));
 
         listDone = true;
         pendingSymbols = names.length;
-        if (names.length === 0) { maybeFinish(); return; }
-        for (const name of names) call.write({ fileContainingSymbol: name });
-
+        if (names.length === 0) {
+          maybeFinish();
+          return;
+        }
+        for (const name of names) {
+          requestedSymbols.add(name);
+          call.write({ fileContainingSymbol: name });
+        }
       } else if (response.fileDescriptorResponse) {
         const protos: Uint8Array[] = response.fileDescriptorResponse.fileDescriptorProto ?? [];
         processFileDescriptors(protos);
         pendingSymbols--;
         maybeFinish();
-
       } else if (response.errorResponse) {
-        console.warn("Reflection error:", response.errorResponse.errorMessage);
         pendingSymbols--;
         maybeFinish();
       }
     });
 
-    call.on("error", (err: Error) => { client.close(); reject(err); });
+    call.on("error", (err: Error) => {
+      client.close();
+      reject(err);
+    });
     call.write({ listServices: "" });
   });
 }
@@ -342,14 +342,12 @@ export async function sendRequest(args: SendRequestArgs): Promise<unknown> {
   const requestBytes = Buffer.from(RequestType.encode(requestMessage).finish());
 
   const client = new grpc.Client(url, grpc.credentials.createInsecure());
-
   return new Promise((resolve, reject) => {
     const deadline = new Date(Date.now() + 30_000);
     client.makeUnaryRequest(
       `/${serviceName}/${methodName}`,
       (req: Buffer) => req,
-      (buf: Buffer) =>
-        ResponseType.toObject(ResponseType.decode(buf), { defaults: true, arrays: true }),
+      (buf: Buffer) => ResponseType.toObject(ResponseType.decode(buf), { defaults: true, arrays: true }),
       requestBytes,
       new grpc.Metadata(),
       { deadline },
