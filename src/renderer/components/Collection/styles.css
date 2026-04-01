@@ -32,6 +32,18 @@
   gap: 2px;
   flex-shrink: 0;
 }
+.collection-error {
+  display: block;
+  color: #f38ba8;
+  font-size: 11px;
+  background: rgba(243, 139, 168, 0.1);
+  border: 1px solid rgba(243, 139, 168, 0.25);
+  border-radius: 4px;
+  padding: 5px 8px;
+  margin: 4px 0;
+  word-break: break-word;
+  line-height: 1.4;
+}
 .resync-tooltip {
   position: fixed;
   transform: translateX(-50%);

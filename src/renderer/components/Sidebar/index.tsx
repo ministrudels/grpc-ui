@@ -29,7 +29,8 @@ interface Props {
 export default function Sidebar({ collections, onCollectionsChange, selectedMethod, onSelectMethod }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [connectError, setConnectError] = useState<string | null>(null);
+  const [resyncErrors, setResyncErrors] = useState<Record<string, string>>({});
 
   function handleDelete(url: string) {
     onCollectionsChange(collections.filter((c) => c.url !== url));
@@ -45,18 +46,19 @@ export default function Sidebar({ collections, onCollectionsChange, selectedMeth
           collections.map((c) => (c.url === url ? { ...fresh, name: existing.name } : c))
         );
       })
-      .catch((err: Error) => setError(err.message ?? "Failed to resync"));
+      .then(() => setResyncErrors((prev) => { const next = { ...prev }; delete next[url]; return next; }))
+      .catch((err: Error) => setResyncErrors((prev) => ({ ...prev, [url]: err.message ?? "Failed to resync" })));
   }
 
   function handleConfirm(name: string, url: string) {
     setLoading(true);
-    setError(null);
+    setConnectError(null);
     window.grpcui
       .connectServer(url)
       .then((collection) => {
         onCollectionsChange([...collections, { ...collection, name }]);
       })
-      .catch((err: Error) => setError(err.message ?? "Failed to connect"))
+      .catch((err: Error) => setConnectError(err.message ?? "Failed to connect"))
       .finally(() => setLoading(false));
   }
 
@@ -77,7 +79,7 @@ export default function Sidebar({ collections, onCollectionsChange, selectedMeth
         )}
       </button>
 
-      {error && <span className="sidebar-error">{error}</span>}
+      {connectError && <span className="sidebar-error">{connectError}</span>}
 
       {collections.length === 0 && !loading && (
         <span>Collections will appear here</span>
@@ -91,6 +93,7 @@ export default function Sidebar({ collections, onCollectionsChange, selectedMeth
           onSelectMethod={onSelectMethod}
           onResync={handleResync}
           onDelete={handleDelete}
+          error={resyncErrors[col.url]}
         />
       ))}
 
