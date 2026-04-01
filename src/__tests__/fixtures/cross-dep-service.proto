@@ -1,0 +1,21 @@
+syntax = "proto3";
+package crossdep;
+
+// Imports a type from a separate package — reflection must chase this
+// dependency and include status.proto's descriptor in the collection.
+import "status.proto";
+
+service ReportService {
+  rpc GetReport (GetReportRequest) returns (GetReportResponse);
+}
+
+message GetReportRequest {
+  string id = 1;
+}
+
+// Response embeds a cross-package message whose field is a cross-package
+// TYPE_ENUM — both must be resolved for sendRequest to succeed.
+message GetReportResponse {
+  string data = 1;
+  status.StatusMessage status = 2;
+}

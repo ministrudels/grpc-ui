@@ -1,0 +1,6 @@
+syntax = "proto3";
+package leaf;
+
+message LeafData {
+  string value = 1;
+}

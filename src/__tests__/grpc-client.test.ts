@@ -20,8 +20,11 @@ import { ReflectionService } from "@grpc/reflection";
 import path from "path";
 import { discoverServices, sendRequest } from "../grpc-client";
 
-const GREETER_PROTO = path.join(__dirname, "fixtures/greeter.proto");
-const EXTENDED_ENUM_PROTO = path.join(__dirname, "fixtures/extended-enum.proto");
+const FIXTURES = path.join(__dirname, "fixtures");
+const GREETER_PROTO = path.join(FIXTURES, "greeter.proto");
+const EXTENDED_ENUM_PROTO = path.join(FIXTURES, "extended-enum.proto");
+const CROSS_DEP_PROTO = path.join(FIXTURES, "cross-dep-service.proto");
+const TRANSITIVE_PROTO = path.join(FIXTURES, "transitive-service.proto");
 
 // ── Shared server factory ─────────────────────────────────────────────────────
 
@@ -306,5 +309,145 @@ describe("end-to-end: discover services then invoke a method", () => {
 
     // Empty name → "Hello "
     expect(response).toEqual({ message: "Hello " });
+  });
+});
+
+// ── Group 5: Cross-file dependencies ─────────────────────────────────────────
+//
+// The service proto imports a separate package (status.proto) that defines
+// both a message and an enum. Reflection must chase the cross-package
+// TYPE_MESSAGE and TYPE_ENUM references so the full type graph is present
+// when sendRequest encodes/decodes the call.
+
+describe("reflection: cross-file type dependencies", () => {
+  let server: grpc.Server;
+  let port: number;
+
+  beforeAll(async () => {
+    const packageDef = protoLoader.loadSync(CROSS_DEP_PROTO, {
+      keepCase: false,
+      longs: String,
+      enums: String,
+      defaults: true,
+      includeDirs: [FIXTURES],
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pkg = grpc.loadPackageDefinition(packageDef) as any;
+
+    server = new grpc.Server();
+    server.addService(pkg.crossdep.ReportService.service, {
+      getReport: (_call: grpc.ServerUnaryCall<unknown, unknown>, callback: grpc.sendUnaryData<unknown>) =>
+        callback(null, { data: "report", status: { code: "OK", description: "success" } }),
+    });
+
+    const reflection = new ReflectionService(packageDef);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (reflection as any).v1.addToServer(server);
+
+    port = await new Promise<number>((resolve, reject) => {
+      server.bindAsync("0.0.0.0:0", grpc.ServerCredentials.createInsecure(), (err, p) =>
+        err ? reject(err) : resolve(p),
+      );
+    });
+  });
+
+  afterAll(() => new Promise<void>((resolve, reject) => server.tryShutdown((err) => (err ? reject(err) : resolve()))));
+
+  it("includes types from imported files in the collection", async () => {
+    const collection = await discoverServices(`localhost:${port}`);
+
+    // Both the service's own types and the imported status types must be present
+    const names = collection.messages.map((m) => m.name);
+    expect(names).toContain("crossdep.GetReportRequest");
+    expect(names).toContain("crossdep.GetReportResponse");
+    expect(names).toContain("status.StatusMessage");
+  });
+
+  it("can invoke a method whose response embeds a cross-package type", async () => {
+    const url = `localhost:${port}`;
+    const collection = await discoverServices(url);
+    const svc = collection.services.find((s) => s.name === "crossdep.ReportService")!;
+    const method = svc.methods.find((m) => m.name === "GetReport")!;
+
+    const response = await sendRequest({
+      url,
+      serviceName: svc.name,
+      methodName: method.name,
+      requestType: method.requestType,
+      responseType: method.responseType,
+      requestJson: JSON.stringify({ id: "123" }),
+      fileDescriptors: collection.fileDescriptors,
+    });
+
+    expect(response).toMatchObject({ data: "report" });
+  });
+});
+
+// ── Group 6: Transitive dependencies (3-level import chain) ──────────────────
+//
+// transitive-service.proto imports middle.proto which imports leaf.proto.
+// Reflection must walk the full dependency chain so all three files end up
+// in the descriptor set — without this, type resolution fails at sendRequest.
+
+describe("reflection: transitive dependencies (3-level import chain)", () => {
+  let server: grpc.Server;
+  let port: number;
+
+  beforeAll(async () => {
+    const packageDef = protoLoader.loadSync(TRANSITIVE_PROTO, {
+      keepCase: false,
+      longs: String,
+      enums: String,
+      defaults: true,
+      includeDirs: [FIXTURES],
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pkg = grpc.loadPackageDefinition(packageDef) as any;
+
+    server = new grpc.Server();
+    server.addService(pkg.transitive.TransitiveService.service, {
+      getData: (_call: grpc.ServerUnaryCall<unknown, unknown>, callback: grpc.sendUnaryData<unknown>) =>
+        callback(null, { data: { leaf: { value: "hello" } } }),
+    });
+
+    const reflection = new ReflectionService(packageDef);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (reflection as any).v1.addToServer(server);
+
+    port = await new Promise<number>((resolve, reject) => {
+      server.bindAsync("0.0.0.0:0", grpc.ServerCredentials.createInsecure(), (err, p) =>
+        err ? reject(err) : resolve(p),
+      );
+    });
+  });
+
+  afterAll(() => new Promise<void>((resolve, reject) => server.tryShutdown((err) => (err ? reject(err) : resolve()))));
+
+  it("includes types from all levels of the import chain", async () => {
+    const collection = await discoverServices(`localhost:${port}`);
+
+    const names = collection.messages.map((m) => m.name);
+    expect(names).toContain("transitive.GetDataResponse");
+    expect(names).toContain("middle.MiddleData");
+    expect(names).toContain("leaf.LeafData");
+  });
+
+  it("can invoke a method whose response type is resolved through 3 levels of imports", async () => {
+    const url = `localhost:${port}`;
+    const collection = await discoverServices(url);
+    const svc = collection.services.find((s) => s.name === "transitive.TransitiveService")!;
+    const method = svc.methods.find((m) => m.name === "GetData")!;
+
+    const response = await sendRequest({
+      url,
+      serviceName: svc.name,
+      methodName: method.name,
+      requestType: method.requestType,
+      responseType: method.responseType,
+      requestJson: JSON.stringify({}),
+      fileDescriptors: collection.fileDescriptors,
+    });
+
+    expect(response).toMatchObject({ data: { leaf: { value: "hello" } } });
   });
 });

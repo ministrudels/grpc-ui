@@ -1,0 +1,16 @@
+syntax = "proto3";
+package transitive;
+
+// 3-level import chain: transitive → middle → leaf.
+// All three files must end up in the descriptor set for type resolution to succeed.
+import "middle.proto";
+
+service TransitiveService {
+  rpc GetData (GetDataRequest) returns (GetDataResponse);
+}
+
+message GetDataRequest {}
+
+message GetDataResponse {
+  middle.MiddleData data = 1;
+}

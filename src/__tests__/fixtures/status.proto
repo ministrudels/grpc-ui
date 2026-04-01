@@ -1,0 +1,13 @@
+syntax = "proto3";
+package status;
+
+enum Code {
+  UNKNOWN = 0;
+  OK = 1;
+  ERROR = 2;
+}
+
+message StatusMessage {
+  Code code = 1;
+  string description = 2;
+}
