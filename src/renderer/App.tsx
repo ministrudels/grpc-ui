@@ -10,6 +10,22 @@ import type { OnSelectMethod } from "./components/Sidebar";
 
 export type { NamedCollection };
 
+export type TabStatus = "idle" | "sending" | "success" | "error";
+
+export type Tab = {
+  id: string;
+  collectionUrl: string;
+  service: GrpcService;
+  method: GrpcMethod;
+  requestBody: string;
+  response: unknown;
+  responseError: string | null;
+  sending: boolean;
+  elapsed: number;
+  status: TabStatus;
+};
+
+// SelectedMethod is derived from the active tab; kept for Sidebar compatibility
 export type SelectedMethod = {
   collectionUrl: string;
   service: GrpcService;
@@ -31,9 +47,9 @@ function saveCollections(collections: NamedCollection[]): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(collections));
 }
 
-// ── Skeleton JSON generation ──────────────────────────────────────────────────
-
-// ─────────────────────────────────────────────────────────────────────────────
+function newTabId(): string {
+  return Math.random().toString(36).slice(2, 9);
+}
 
 const styles: Record<string, React.CSSProperties> = {
   app: {
@@ -73,21 +89,39 @@ const styles: Record<string, React.CSSProperties> = {
 
 export default function App() {
   const [collections, setCollections] = useState<NamedCollection[]>(loadCollections);
-  const [selectedMethod, setSelectedMethod] = useState<SelectedMethod | null>(null);
-  const [requestBody, setRequestBody] = useState("");
-  const [response, setResponse] = useState<unknown>(null);
-  const [responseError, setResponseError] = useState<string | null>(null);
-  const [sending, setSending] = useState(false);
-  const [elapsed, setElapsed] = useState(0);
+  const [tabs, setTabs] = useState<Tab[]>([]);
+  const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [snackbar, setSnackbar] = useState<{ message: string; visible: boolean }>({ message: "", visible: false });
   const snackbarTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const activeTab = tabs.find((t) => t.id === activeTabId) ?? null;
+
+  // Derived for Sidebar highlight compatibility
+  const selectedMethod: SelectedMethod | null = activeTab
+    ? { collectionUrl: activeTab.collectionUrl, service: activeTab.service, method: activeTab.method }
+    : null;
+
+  function updateTab(id: string, patch: Partial<Tab>) {
+    setTabs((prev) => prev.map((t) => (t.id === id ? { ...t, ...patch } : t)));
+  }
+
+  // Elapsed timer — tracks the active tab's in-flight request
+  const activeSending = activeTab?.sending ?? false;
   useEffect(() => {
-    if (!sending) { setElapsed(0); return; }
+    if (!activeSending || !activeTabId) {
+      if (activeTabId) setTabs((prev) => prev.map((t) => (t.id === activeTabId ? { ...t, elapsed: 0 } : t)));
+      return;
+    }
     const start = Date.now();
-    const id = setInterval(() => setElapsed(Math.floor((Date.now() - start) / 1000)), 250);
+    const id = setInterval(() => {
+      setTabs((prev) =>
+        prev.map((t) =>
+          t.id === activeTabId ? { ...t, elapsed: Math.floor((Date.now() - start) / 1000) } : t
+        )
+      );
+    }, 250);
     return () => clearInterval(id);
-  }, [sending]);
+  }, [activeSending, activeTabId]);
 
   function showSnackbar(message: string) {
     if (snackbarTimer.current) clearTimeout(snackbarTimer.current);
@@ -102,14 +136,14 @@ export default function App() {
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape" && sending) {
+      if (e.key === "Escape" && activeTab?.sending) {
         window.grpcui.cancelRequest();
         return;
       }
       if (!(e.key === "Enter" && e.metaKey)) return;
-      if (!selectedMethod) {
+      if (!activeTab) {
         showSnackbar("Select a method before sending");
-      } else if (sending) {
+      } else if (activeTab.sending) {
         showSnackbar("A request is already in flight");
       } else {
         handleSend();
@@ -120,39 +154,52 @@ export default function App() {
   });
 
   const handleSelectMethod: OnSelectMethod = (collectionUrl, service, method, messages) => {
-    setSelectedMethod({ collectionUrl, service, method });
-    setResponse(null);
-    setResponseError(null);
     const skeleton = skeletonFromMessage(method.requestType, messages);
-    setRequestBody(JSON.stringify(skeleton, null, 2));
+    const tab: Tab = {
+      id: newTabId(),
+      collectionUrl,
+      service,
+      method,
+      requestBody: JSON.stringify(skeleton, null, 2),
+      response: null,
+      responseError: null,
+      sending: false,
+      elapsed: 0,
+      status: "idle",
+    };
+    // Step 1: always replace with a single tab — open/focus logic comes in Step 2
+    setTabs([tab]);
+    setActiveTabId(tab.id);
   };
 
   async function handleSend() {
-    if (!selectedMethod || sending) return;
-    const col = collections.find((c) => c.url === selectedMethod.collectionUrl);
+    if (!activeTab || activeTab.sending) return;
+    const tabId = activeTab.id;
+    const col = collections.find((c) => c.url === activeTab.collectionUrl);
     if (!col?.fileDescriptors?.length) {
-      setResponseError("No schema available — resync the collection first.");
+      updateTab(tabId, { responseError: "No schema available — resync the collection first." });
       return;
     }
-    setSending(true);
-    setResponse(null);
-    setResponseError(null);
+    updateTab(tabId, { sending: true, response: null, responseError: null, status: "sending" });
     try {
       const res = await window.grpcui.sendRequest({
-        url: selectedMethod.collectionUrl,
-        serviceName: selectedMethod.service.name,
-        methodName: selectedMethod.method.name,
-        requestType: selectedMethod.method.requestType,
-        responseType: selectedMethod.method.responseType,
-        requestJson: requestBody,
+        url: activeTab.collectionUrl,
+        serviceName: activeTab.service.name,
+        methodName: activeTab.method.name,
+        requestType: activeTab.method.requestType,
+        responseType: activeTab.method.responseType,
+        requestJson: activeTab.requestBody,
         fileDescriptors: col.fileDescriptors
       });
-      setResponse(res);
+      updateTab(tabId, { response: res, status: "success" });
     } catch (err: unknown) {
       const msg = (err as Error).message ?? "Request failed";
-      setResponseError(msg.includes("Cancelled") ? "Request cancelled." : msg);
+      updateTab(tabId, {
+        responseError: msg.includes("Cancelled") ? "Request cancelled." : msg,
+        status: "error",
+      });
     } finally {
-      setSending(false);
+      updateTab(tabId, { sending: false });
     }
   }
 
@@ -167,25 +214,29 @@ export default function App() {
       <div style={styles.main}>
         <div style={styles.topRow}>
           <AddressBar
-            url={selectedMethod?.collectionUrl ?? ""}
-            canSend={!!selectedMethod && !sending}
-            sending={sending}
-            elapsed={elapsed}
+            url={activeTab?.collectionUrl ?? ""}
+            canSend={!!activeTab && !activeTab.sending}
+            sending={activeTab?.sending ?? false}
+            elapsed={activeTab?.elapsed ?? 0}
             onSend={handleSend}
             onCancel={() => window.grpcui.cancelRequest()}
           />
         </div>
         <div style={styles.panels}>
-          {selectedMethod ? (
+          {activeTab ? (
             <>
               <RequestBody
-                value={requestBody}
-                onChange={setRequestBody}
+                value={activeTab.requestBody}
+                onChange={(v) => updateTab(activeTab.id, { requestBody: v })}
                 onSend={handleSend}
-                requestType={selectedMethod?.method.requestType}
-                messages={collections.find((c) => c.url === selectedMethod?.collectionUrl)?.messages}
+                requestType={activeTab.method.requestType}
+                messages={collections.find((c) => c.url === activeTab.collectionUrl)?.messages}
               />
-              <ResponsePanel response={response} error={responseError} loading={sending} />
+              <ResponsePanel
+                response={activeTab.response}
+                error={activeTab.responseError}
+                loading={activeTab.sending}
+              />
             </>
           ) : (
             <div style={styles.placeholder}>Select a method from the sidebar to get started</div>
