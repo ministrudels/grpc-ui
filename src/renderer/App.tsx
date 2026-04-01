@@ -154,6 +154,15 @@ export default function App() {
   });
 
   const handleSelectMethod: OnSelectMethod = (collectionUrl, service, method, messages) => {
+    // If this method already has a tab, just focus it
+    const existing = tabs.find(
+      (t) => t.collectionUrl === collectionUrl && t.service.name === service.name && t.method.name === method.name
+    );
+    if (existing) {
+      setActiveTabId(existing.id);
+      return;
+    }
+    // Otherwise open a new tab
     const skeleton = skeletonFromMessage(method.requestType, messages);
     const tab: Tab = {
       id: newTabId(),
@@ -167,8 +176,7 @@ export default function App() {
       elapsed: 0,
       status: "idle",
     };
-    // Step 1: always replace with a single tab — open/focus logic comes in Step 2
-    setTabs([tab]);
+    setTabs((prev) => [...prev, tab]);
     setActiveTabId(tab.id);
   };
 
