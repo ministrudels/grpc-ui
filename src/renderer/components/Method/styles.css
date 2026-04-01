@@ -3,10 +3,11 @@
   align-items: center;
   gap: 5px;
   font-size: 12px;
-  padding: 2px 4px 2px 20px;
+  padding: 4px 4px 4px 20px;
   border-radius: 3px;
   cursor: pointer;
   min-width: 0;
+  margin-top: 2px;
 }
 .method:hover {
   background: #242424;

@@ -1,3 +1,6 @@
+.service {
+  margin-top: 10px;
+}
 .service-header {
   display: flex;
   align-items: center;

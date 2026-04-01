@@ -40,7 +40,7 @@ export default function Service({ service, collectionUrl, messages, selectedMeth
   if (query && visibleMethods.length === 0) return null;
 
   return (
-    <div>
+    <div className="service">
       <div className="service-header" title={service.name} onClick={() => setOpen((o) => !o)}>
         <span className={`service-chevron${open || query ? " open" : ""}`}>▶</span>
         <span className="service-name">{service.name.split(".").pop()}</span>
