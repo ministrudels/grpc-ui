@@ -4,7 +4,8 @@ import AddressBar from "./components/AddressBar";
 import RequestBody from "./components/RequestBody";
 import ResponsePanel from "./components/ResponsePanel";
 import Snackbar from "./components/Snackbar";
-import type { GrpcField, GrpcMessage, GrpcMethod, GrpcService, NamedCollection } from "./global";
+import type { GrpcMethod, GrpcService, NamedCollection } from "./global";
+import { skeletonFromMessage } from "./proto";
 import type { OnSelectMethod } from "./components/Sidebar";
 
 export type { NamedCollection };
@@ -31,51 +32,6 @@ function saveCollections(collections: NamedCollection[]): void {
 }
 
 // ── Skeleton JSON generation ──────────────────────────────────────────────────
-
-function buildSkeleton(
-  typeName: string,
-  messages: GrpcMessage[],
-  visited = new Set<string>()
-): Record<string, unknown> {
-  if (visited.has(typeName)) return {};
-  visited.add(typeName);
-  const msg = messages.find((m) => m.name === typeName);
-  if (!msg) return {};
-  const result: Record<string, unknown> = {};
-  for (const field of msg.fields) {
-    result[field.name] = field.repeated ? [] : fieldDefault(field, messages, visited);
-  }
-  return result;
-}
-
-function fieldDefault(field: GrpcField, messages: GrpcMessage[], visited: Set<string>): unknown {
-  switch (field.type) {
-    case "TYPE_STRING":
-      return "";
-    case "TYPE_BOOL":
-      return false;
-    case "TYPE_BYTES":
-      return "";
-    case "TYPE_DOUBLE":
-    case "TYPE_FLOAT":
-    case "TYPE_INT32":
-    case "TYPE_INT64":
-    case "TYPE_UINT32":
-    case "TYPE_UINT64":
-    case "TYPE_SINT32":
-    case "TYPE_SINT64":
-    case "TYPE_FIXED32":
-    case "TYPE_FIXED64":
-    case "TYPE_SFIXED32":
-    case "TYPE_SFIXED64":
-    case "TYPE_ENUM":
-      return 0;
-    case "TYPE_MESSAGE":
-      return buildSkeleton(field.typeName, messages, visited);
-    default:
-      return null;
-  }
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -167,7 +123,7 @@ export default function App() {
     setSelectedMethod({ collectionUrl, service, method });
     setResponse(null);
     setResponseError(null);
-    const skeleton = buildSkeleton(method.requestType, messages);
+    const skeleton = skeletonFromMessage(method.requestType, messages);
     setRequestBody(JSON.stringify(skeleton, null, 2));
   };
 
