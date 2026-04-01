@@ -222,7 +222,13 @@ export default function App() {
         <div style={styles.panels}>
           {selectedMethod ? (
             <>
-              <RequestBody value={requestBody} onChange={setRequestBody} onSend={handleSend} />
+              <RequestBody
+                value={requestBody}
+                onChange={setRequestBody}
+                onSend={handleSend}
+                requestType={selectedMethod?.method.requestType}
+                messages={collections.find((c) => c.url === selectedMethod?.collectionUrl)?.messages}
+              />
               <ResponsePanel response={response} error={responseError} loading={sending} />
             </>
           ) : (
