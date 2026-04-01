@@ -30,8 +30,8 @@ jobs:
       - name: Unit tests
         run: npm test
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+      - name: Install Playwright system dependencies
+        run: npx playwright install-deps
 
       - name: E2E tests
-        run: xvfb-run --auto-servernum npm run e2e
+        run: xvfb-run --auto-servernum npx playwright test
