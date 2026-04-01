@@ -1,4 +1,3 @@
-import React from "react";
 import type { GrpcMethod } from "../../global";
 import "./styles.css";
 

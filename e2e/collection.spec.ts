@@ -2,7 +2,7 @@ import { test, expect, seedCollection } from "./fixtures";
 
 test.describe("sync button", () => {
   test("stays disabled while request is in-flight", async ({ app, window }) => {
-    await seedCollection(app, window);
+    await seedCollection(window);
 
     // Replace the IPC handler with one that hangs so we can assert mid-flight
     await app.evaluate(({ ipcMain }) => {

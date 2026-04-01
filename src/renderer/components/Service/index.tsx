@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import Method from "../Method";
 import type { GrpcMessage, GrpcService } from "../../global";
 import type { SelectedMethod } from "../../App";

@@ -10,7 +10,7 @@ export const test = base.extend<Fixtures>({
   app: async ({}, use) => {
     const app = await electron.launch({
       args: [path.join(__dirname, "../dist/main/main.js")],
-      env: { ...process.env, PLAYWRIGHT: "1" },
+      env: { ...process.env, PLAYWRIGHT: "1" }
     });
     await use(app);
     await app.close();
@@ -19,21 +19,20 @@ export const test = base.extend<Fixtures>({
     const window = await app.firstWindow();
     await window.waitForLoadState("domcontentloaded");
     await use(window);
-  },
+  }
 });
 
 export { expect } from "@playwright/test";
 
 /** Seed localStorage with a collection and reload so the sidebar renders it. */
 export async function seedCollection(
-  app: ElectronApplication,
   window: Page,
   collection = {
     url: "localhost:50051",
     name: "Test",
     services: [],
     messages: [],
-    fileDescriptors: [],
+    fileDescriptors: []
   }
 ) {
   await window.evaluate((col) => {

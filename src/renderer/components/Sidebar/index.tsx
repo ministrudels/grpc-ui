@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import AddCollectionDialog from "../AddCollectionDialog";
 import Collection from "../Collection";
 import type { GrpcMessage, GrpcMethod, GrpcService } from "../../global";

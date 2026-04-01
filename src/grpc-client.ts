@@ -199,7 +199,6 @@ function runReflection(url: string, ClientCtor: grpc.ServiceClientConstructor): 
     const allMessages: GrpcMessage[] = [];
     const allFileDescriptors: string[] = [];
     const seenFiles = new Set<string>();
-    const requestedFiles = new Set<string>();
     // Symbols (service or type names) already requested via fileContainingSymbol
     const requestedSymbols = new Set<string>();
     let pendingSymbols = 0;
