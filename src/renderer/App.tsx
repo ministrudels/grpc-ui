@@ -122,8 +122,16 @@ export default function App() {
   const [response, setResponse] = useState<unknown>(null);
   const [responseError, setResponseError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
   const [snackbar, setSnackbar] = useState<{ message: string; visible: boolean }>({ message: "", visible: false });
   const snackbarTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!sending) { setElapsed(0); return; }
+    const start = Date.now();
+    const id = setInterval(() => setElapsed(Math.floor((Date.now() - start) / 1000)), 250);
+    return () => clearInterval(id);
+  }, [sending]);
 
   function showSnackbar(message: string) {
     if (snackbarTimer.current) clearTimeout(snackbarTimer.current);
@@ -182,7 +190,7 @@ export default function App() {
       setResponse(res);
     } catch (err: unknown) {
       const msg = (err as Error).message ?? "Request failed";
-      if (msg !== "Cancelled") setResponseError(msg);
+      setResponseError(msg.includes("Cancelled") ? "Request cancelled." : msg);
     } finally {
       setSending(false);
     }
@@ -202,6 +210,7 @@ export default function App() {
             url={selectedMethod?.collectionUrl ?? ""}
             canSend={!!selectedMethod && !sending}
             sending={sending}
+            elapsed={elapsed}
             onSend={handleSend}
             onCancel={() => window.grpcui.cancelRequest()}
           />

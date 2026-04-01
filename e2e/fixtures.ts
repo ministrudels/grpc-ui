@@ -27,7 +27,7 @@ export { expect } from "@playwright/test";
 /** Seed localStorage with a collection and reload so the sidebar renders it. */
 export async function seedCollection(
   window: Page,
-  collection = {
+  collection: object = {
     url: "localhost:50051",
     name: "Test",
     services: [],

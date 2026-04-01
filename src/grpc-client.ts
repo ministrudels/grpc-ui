@@ -409,6 +409,11 @@ export async function sendRequest(args: SendRequestArgs, signal?: AbortSignal): 
   const client = new grpc.Client(url, grpc.credentials.createInsecure());
   return new Promise((resolve, reject) => {
     const deadline = new Date(Date.now() + 30_000);
+    let closed = false;
+    function closeOnce() {
+      if (!closed) { closed = true; client.close(); }
+    }
+
     const call = client.makeUnaryRequest(
       `/${serviceName}/${methodName}`,
       (req: Buffer) => req,
@@ -423,14 +428,14 @@ export async function sendRequest(args: SendRequestArgs, signal?: AbortSignal): 
       new grpc.Metadata(),
       { deadline },
       (err, response) => {
-        client.close();
+        closeOnce();
         if (err) reject(err);
         else resolve(response);
       }
     );
     signal?.addEventListener("abort", () => {
       call.cancel();
-      client.close();
+      closeOnce();
       reject(new Error("Cancelled"));
     }, { once: true });
   });

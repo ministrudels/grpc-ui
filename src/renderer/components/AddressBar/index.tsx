@@ -4,11 +4,18 @@ interface Props {
   url: string;
   canSend: boolean;
   sending: boolean;
+  elapsed: number;
   onSend: () => void;
   onCancel: () => void;
 }
 
-export default function AddressBar({ url, canSend, sending, onSend, onCancel }: Props) {
+function formatElapsed(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+export default function AddressBar({ url, canSend, sending, elapsed, onSend, onCancel }: Props) {
   return (
     <div className="address-bar">
       <input
@@ -17,11 +24,14 @@ export default function AddressBar({ url, canSend, sending, onSend, onCancel }: 
         placeholder="Select a method from the sidebar"
         readOnly
       />
-      {sending ? (
-        <button className="cancel-btn" onClick={onCancel}>Cancel</button>
-      ) : (
-        <button className="send-btn" disabled={!canSend} onClick={onSend}>Send</button>
-      )}
+      <div className="address-btn-group">
+        {sending ? (
+          <button className="cancel-btn" onClick={onCancel}>Cancel</button>
+        ) : (
+          <button className="send-btn" disabled={!canSend} onClick={onSend}>Send</button>
+        )}
+        {sending && <span className="address-timer">{formatElapsed(elapsed)}</span>}
+      </div>
     </div>
   );
 }
