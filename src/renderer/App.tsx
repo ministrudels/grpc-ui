@@ -146,6 +146,10 @@ export default function App() {
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape" && sending) {
+        window.grpcui.cancelRequest();
+        return;
+      }
       if (!(e.key === "Enter" && e.metaKey)) return;
       if (!selectedMethod) {
         showSnackbar("Select a method before sending");
