@@ -137,7 +137,7 @@ interface RawFileDescriptor {
 function parseFileDescriptor(
   bytes: Buffer,
   seenFiles: Set<string>
-): { services: GrpcService[]; messages: GrpcMessage[] } | null {
+): { services: GrpcService[]; messages: GrpcMessage[]; dependencies: string[] } | null {
   const fd = FileDescriptorProtoType.toObject(FileDescriptorProtoType.decode(bytes), {
     defaults: true,
     arrays: true,
@@ -162,7 +162,7 @@ function parseFileDescriptor(
 
   const messages = parseDescriptors(fd.messageType ?? [], pkg);
 
-  return { services, messages };
+  return { services, messages, dependencies: fd.dependency ?? [] };
 }
 
 function parseDescriptors(descriptors: RawDescriptor[], scope: string): GrpcMessage[] {
@@ -220,12 +220,22 @@ function runReflection(url: string, ClientCtor: grpc.ServiceClientConstructor): 
       });
     }
 
+    const requestedFileNames = new Set<string>();
+
     // Request a symbol (type or service name) if not already requested.
     function requestSymbol(name: string) {
       if (!name || requestedSymbols.has(name)) return;
       requestedSymbols.add(name);
       pendingSymbols++;
       call.write({ fileContainingSymbol: name });
+    }
+
+    // Request a file by filename if not already requested.
+    function requestFile(filename: string) {
+      if (!filename || requestedFileNames.has(filename) || seenFiles.has(filename)) return;
+      requestedFileNames.add(filename);
+      pendingSymbols++;
+      call.write({ fileByFilename: filename });
     }
 
     // Process a batch of FileDescriptorProto bytes from a single response.
@@ -241,6 +251,12 @@ function runReflection(url: string, ClientCtor: grpc.ServiceClientConstructor): 
           allServices.push(...parsed.services);
           allMessages.push(...parsed.messages);
 
+          // Chase explicit file dependencies by filename — catches enums and any
+          // other types that aren't reachable via symbol chasing alone.
+          for (const dep of parsed.dependencies) {
+            requestFile(dep);
+          }
+
           // Chase method input/output types
           for (const svc of parsed.services) {
             for (const method of svc.methods) {
@@ -249,11 +265,11 @@ function runReflection(url: string, ClientCtor: grpc.ServiceClientConstructor): 
             }
           }
 
-          // Chase TYPE_MESSAGE field types in message definitions so that
-          // resolveAll() can resolve the full type graph
+          // Chase TYPE_MESSAGE and TYPE_ENUM field types so resolveAll() can
+          // resolve the full type graph including cross-package enum references.
           for (const msg of parsed.messages) {
             for (const field of msg.fields) {
-              if (field.type === "TYPE_MESSAGE" && field.typeName) {
+              if ((field.type === "TYPE_MESSAGE" || field.type === "TYPE_ENUM") && field.typeName) {
                 requestSymbol(field.typeName);
               }
             }
