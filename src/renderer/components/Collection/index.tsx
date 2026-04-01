@@ -20,6 +20,7 @@ interface Props {
   onResync: (url: string) => Promise<void>;
   onDelete: (url: string) => void;
   error?: string | null;
+  query?: string;
 }
 
 /**
@@ -27,7 +28,7 @@ interface Props {
  * discovered from a single server URL. Includes a resync button (↻) and a
  * trash button that prompts for confirmation before deleting the collection.
  */
-export default function Collection({ collection, selectedMethod, onSelectMethod, onResync, onDelete, error }: Props) {
+export default function Collection({ collection, selectedMethod, onSelectMethod, onResync, onDelete, error, query = "" }: Props) {
   const [open, setOpen] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number } | null>(null);
@@ -100,7 +101,7 @@ export default function Collection({ collection, selectedMethod, onSelectMethod,
 
       {error && <span className="collection-error">{error}</span>}
 
-      {open &&
+      {(open || query) &&
         collection.services.map((svc) => (
           <Service
             key={svc.name}
@@ -109,6 +110,7 @@ export default function Collection({ collection, selectedMethod, onSelectMethod,
             messages={collection.messages}
             selectedMethod={selectedMethod}
             onSelectMethod={onSelectMethod}
+            query={query}
           />
         ))}
     </div>

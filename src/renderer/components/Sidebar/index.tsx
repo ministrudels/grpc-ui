@@ -33,6 +33,7 @@ export default function Sidebar({ collections, onCollectionsChange, selectedMeth
   const [connectError, setConnectError] = useState<string | null>(null);
   const [resyncErrors, setResyncErrors] = useState<Record<string, string>>({});
   const [progress, setProgress] = useState<ReflectProgress | null>(null);
+  const [query, setQuery] = useState("");
 
   const busy = loading || resyncing > 0;
 
@@ -103,16 +104,18 @@ export default function Sidebar({ collections, onCollectionsChange, selectedMeth
           </div>
         </div>
       )}
-      <button className="sidebar-add-btn" onClick={() => setDialogOpen(true)} disabled={busy}>
-        {loading ? (
-          <span className="sidebar-spinner">
-            <span className="sidebar-spinner-icon" />
-            Connecting…
-          </span>
-        ) : (
-          "+ Add Collection"
-        )}
-      </button>
+      <div className="sidebar-toolbar">
+        <input
+          className="sidebar-search"
+          placeholder="Search methods…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          spellCheck={false}
+        />
+        <button className="sidebar-add-btn" onClick={() => setDialogOpen(true)} disabled={busy} title="Add collection">
+          {loading ? <span className="sidebar-spinner-icon" /> : "+"}
+        </button>
+      </div>
 
       {connectError && <span className="sidebar-error">{connectError}</span>}
 
@@ -125,6 +128,7 @@ export default function Sidebar({ collections, onCollectionsChange, selectedMeth
           onResync={handleResync}
           onDelete={handleDelete}
           error={resyncErrors[col.url]}
+          query={query}
         />
       ))}
 
