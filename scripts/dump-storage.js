@@ -6,7 +6,28 @@
 const path = require("path");
 const os = require("os");
 const fs = require("fs");
+const protobuf = require("protobufjs");
 const { ClassicLevel } = require("classic-level");
+
+const descriptorRoot = protobuf.loadSync(path.join(__dirname, "../src/proto/descriptor.proto"));
+const FileDescriptorProto = descriptorRoot.lookupType("google.protobuf.FileDescriptorProto");
+
+function decodeFileDescriptor(b64) {
+  const buf = Buffer.from(b64, "base64");
+  const fd = FileDescriptorProto.toObject(FileDescriptorProto.decode(buf), {
+    defaults: true,
+    arrays: true,
+    enums: String,
+  });
+  return {
+    name: fd.name,
+    package: fd.package || null,
+    dependencies: fd.dependency?.length ? fd.dependency : undefined,
+    messages: fd.messageType?.map((m) => m.name).filter(Boolean),
+    enums: fd.enumType?.map((e) => e.name).filter(Boolean),
+    services: fd.service?.map((s) => s.name).filter(Boolean),
+  };
+}
 
 const userDataPaths = {
   darwin: path.join(os.homedir(), "Library", "Application Support", "grpc-ui"),
@@ -29,11 +50,7 @@ function redact(val) {
     return Object.fromEntries(
       Object.entries(val).map(([k, v]) => {
         if (k === "fileDescriptors" && Array.isArray(v)) {
-          const bytes = v.reduce((n, b64) => n + Buffer.from(b64, "base64").length, 0);
-          return [k, `<${v.length} descriptor${v.length !== 1 ? "s" : ""}, ${(bytes / 1024).toFixed(1)} KB>`];
-        }
-        if (k === "messages" && Array.isArray(v)) {
-          return [k, `<${v.length} message type${v.length !== 1 ? "s" : ""}>`];
+          return [k, v.map(decodeFileDescriptor)];
         }
         return [k, redact(v)];
       })
