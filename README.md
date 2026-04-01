@@ -1,17 +1,40 @@
 # grpc-ui
 
-A desktop gRPC client — similar to Insomnia or Postman, but for gRPC. Built with Electron, React, and TypeScript.
+A desktop gRPC client — built for developers who want Postman-level ergonomics for gRPC. No proto files, no config files, no plugins. Point it at a server and start sending requests.
 
-## What it does
+Built with Electron, React, and TypeScript.
 
-Point it at any running gRPC server that has **server reflection** enabled and it will automatically discover all available services and methods, no proto files required.
+## Features
 
-- **Add Collection** — enter a server URL (e.g. `localhost:50051`), the app queries the server's reflection endpoint and populates the sidebar with a tree of services and methods.
-- **Sidebar** — browse discovered collections. Each entry expands into services and their individual RPC methods. Resync a collection at any time to pick up schema changes.
-- **Request panel** — select a method and a skeleton JSON request body is auto-generated from the protobuf message definition. Edit it and hit **Send** (or `⌘Enter`).
-- **Response panel** — displays the response JSON on success, or the gRPC status and error message on failure.
+### Zero-config schema discovery
 
-Server reflection v1alpha and v1 are both supported with automatic fallback, so the app works against both older and modern gRPC server frameworks. Cross-package protobuf dependencies (enums, nested message types from imported files) are fully resolved during reflection.
+Connect to any gRPC server with reflection enabled and grpc-ui automatically discovers every service, method, and message type. Both reflection v1 and v1alpha are supported with automatic fallback, so it works with all major frameworks (grpc-go, grpc-java, grpc-node, tonic, etc.). Cross-package protobuf dependencies — enums, nested types from imported `.proto` files — are fully resolved.
+
+### Monaco-powered request editor
+
+The request body editor is backed by Monaco (the engine behind VS Code). When you select a method, a zero-value JSON skeleton is generated from the proto message definition and dropped into the editor. The editor has full JSON Schema validation and autocomplete driven by the proto schema — field names, types, and nested message shapes are all suggested as you type.
+
+### Request / response at a glance
+
+- Auto-generated skeleton saves you from writing boilerplate
+- Send with `⌘Enter` from anywhere in the app, or from inside the editor
+- Live elapsed timer while a request is in flight
+- Cancel in-flight requests with the Cancel button or `Escape`
+- Response panel shows pretty-printed JSON on success, or the gRPC status code and error message on failure
+
+### Sidebar search
+
+Command-palette style fuzzy search across all collections, services, and methods. Characters are matched in order — type `uls` to find `UserListService`.
+
+### Method type badges
+
+Every method is labelled with its streaming type — `U` (unary), `SS` (server streaming), `CS` (client streaming), `BIDI` (bidirectional) — so you always know what you're calling.
+
+### Persistent collections
+
+Collections are saved to localStorage and restored on next launch. Resync any collection at any time to pick up schema changes on the server.
+
+---
 
 ## Prerequisites
 
@@ -48,7 +71,7 @@ Builds the renderer (Vite) and main process (TypeScript), then launches Electron
 npm test
 ```
 
-Runs the integration test suite with Vitest. Tests spin up a real in-process gRPC server to verify the reflection client end-to-end.
+Vitest unit tests (proto type mapping, schema generation) and integration tests that spin up a real in-process gRPC server to verify reflection end-to-end.
 
 ### End-to-end
 
@@ -82,9 +105,10 @@ src/
   proto/           # Reflection and descriptor proto definitions
   renderer/
     App.tsx        # Root layout and send-request logic
+    proto.ts       # Proto type → JSON skeleton / JSON Schema
     components/    # Sidebar, Collection, Service, Method,
                    # AddressBar, RequestBody, ResponsePanel
-  __tests__/       # Integration tests
+  __tests__/       # Unit and integration tests
 e2e/               # Playwright end-to-end tests
 scripts/
   dump-storage.js  # Dev tool: inspect localStorage contents
