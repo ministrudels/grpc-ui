@@ -1,6 +1,4 @@
-import CodeMirror from "@uiw/react-codemirror";
-import { json } from "@codemirror/lang-json";
-import { oneDark } from "@codemirror/theme-one-dark";
+import Editor from "@monaco-editor/react";
 import "./styles.css";
 
 interface Props {
@@ -33,13 +31,25 @@ export default function ResponsePanel({ response, error, loading }: Props) {
       <div className="response-panel">
         <div className="response-label">Response</div>
         <div className="response-editor">
-          <CodeMirror
+          <Editor
+            language="json"
+            theme="vs-dark"
             value={JSON.stringify(response, null, 2)}
-            extensions={[json()]}
-            theme={oneDark}
-            readOnly
-            basicSetup={{ lineNumbers: false, foldGutter: false }}
-            style={{ fontSize: 13, height: "100%" }}
+            options={{
+              readOnly: true,
+              minimap: { enabled: false },
+              lineNumbers: "off",
+              folding: false,
+              scrollBeyondLastLine: false,
+              wordWrap: "on",
+              fontSize: 13,
+              fontFamily: "monospace",
+              renderLineHighlight: "none",
+              overviewRulerLanes: 0,
+              hideCursorInOverviewRuler: true,
+              scrollbar: { verticalScrollbarSize: 6, horizontalScrollbarSize: 6 },
+              domReadOnly: true,
+            }}
           />
         </div>
       </div>

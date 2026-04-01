@@ -20,15 +20,3 @@
   overflow: hidden;
   min-height: 0;
 }
-.request-editor .cm-editor {
-  height: 100%;
-  background: transparent;
-}
-.request-editor .cm-scroller {
-  font-family: monospace;
-  line-height: 1.5;
-  padding: 8px 4px;
-}
-.request-editor .cm-focused {
-  outline: none;
-}

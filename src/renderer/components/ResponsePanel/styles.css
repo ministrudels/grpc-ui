@@ -33,15 +33,3 @@
   overflow: hidden;
   min-height: 0;
 }
-.response-editor .cm-editor {
-  height: 100%;
-  background: transparent;
-}
-.response-editor .cm-scroller {
-  font-family: monospace;
-  line-height: 1.5;
-  padding: 8px 4px;
-}
-.response-editor .cm-focused {
-  outline: none;
-}

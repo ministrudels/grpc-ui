@@ -1,6 +1,4 @@
-import CodeMirror from "@uiw/react-codemirror";
-import { json } from "@codemirror/lang-json";
-import { oneDark } from "@codemirror/theme-one-dark";
+import Editor from "@monaco-editor/react";
 import "./styles.css";
 
 interface Props {
@@ -13,13 +11,24 @@ export default function RequestBody({ value, onChange }: Props) {
     <div className="request-body">
       <div className="request-label">Request</div>
       <div className="request-editor">
-        <CodeMirror
+        <Editor
+          language="json"
+          theme="vs-dark"
           value={value}
-          onChange={onChange}
-          extensions={[json()]}
-          theme={oneDark}
-          basicSetup={{ lineNumbers: false, foldGutter: false }}
-          style={{ fontSize: 13, height: "100%" }}
+          onChange={(v) => onChange(v ?? "")}
+          options={{
+            minimap: { enabled: false },
+            lineNumbers: "off",
+            folding: false,
+            scrollBeyondLastLine: false,
+            wordWrap: "on",
+            fontSize: 13,
+            fontFamily: "monospace",
+            renderLineHighlight: "none",
+            overviewRulerLanes: 0,
+            hideCursorInOverviewRuler: true,
+            scrollbar: { verticalScrollbarSize: 6, horizontalScrollbarSize: 6 },
+          }}
         />
       </div>
     </div>
