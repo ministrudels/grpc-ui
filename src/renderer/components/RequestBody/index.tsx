@@ -1,3 +1,6 @@
+import CodeMirror from "@uiw/react-codemirror";
+import { json } from "@codemirror/lang-json";
+import { oneDark } from "@codemirror/theme-one-dark";
 import "./styles.css";
 
 interface Props {
@@ -5,21 +8,20 @@ interface Props {
   onChange: (value: string) => void;
 }
 
-/**
- * Left half of the main panels area. Provides a free-form textarea for
- * editing the JSON request payload. Pre-populated with a skeleton derived
- * from the selected method's input message definition when a method is chosen.
- */
 export default function RequestBody({ value, onChange }: Props) {
   return (
     <div className="request-body">
       <div className="request-label">Request</div>
-      <textarea
-        className="request-textarea"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        spellCheck={false}
-      />
+      <div className="request-editor">
+        <CodeMirror
+          value={value}
+          onChange={onChange}
+          extensions={[json()]}
+          theme={oneDark}
+          basicSetup={{ lineNumbers: false, foldGutter: false }}
+          style={{ fontSize: 13, height: "100%" }}
+        />
+      </div>
     </div>
   );
 }
