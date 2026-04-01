@@ -42,7 +42,11 @@ export default function Sidebar({ collections, onCollectionsChange, selectedMeth
     try {
       const fresh = await window.grpcui.connectServer(url);
       onCollectionsChange(collections.map((c) => (c.url === url ? { ...fresh, name: existing.name } : c)));
-      setResyncErrors((prev) => { const next = { ...prev }; delete next[url]; return next; });
+      setResyncErrors((prev) => {
+        const next = { ...prev };
+        delete next[url];
+        return next;
+      });
     } catch (err) {
       setResyncErrors((prev) => ({ ...prev, [url]: (err as Error).message ?? "Failed to resync" }));
     }
@@ -63,11 +67,7 @@ export default function Sidebar({ collections, onCollectionsChange, selectedMeth
 
   return (
     <div className="sidebar">
-      <button
-        className="sidebar-add-btn"
-        onClick={() => setDialogOpen(true)}
-        disabled={loading}
-      >
+      <button className="sidebar-add-btn" onClick={() => setDialogOpen(true)} disabled={loading}>
         {loading ? (
           <span className="sidebar-spinner">
             <span className="sidebar-spinner-icon" />
@@ -79,10 +79,6 @@ export default function Sidebar({ collections, onCollectionsChange, selectedMeth
       </button>
 
       {connectError && <span className="sidebar-error">{connectError}</span>}
-
-      {collections.length === 0 && !loading && (
-        <span>Collections will appear here</span>
-      )}
 
       {collections.map((col) => (
         <Collection
@@ -96,12 +92,7 @@ export default function Sidebar({ collections, onCollectionsChange, selectedMeth
         />
       ))}
 
-      {dialogOpen && (
-        <AddCollectionDialog
-          onClose={() => setDialogOpen(false)}
-          onConfirm={handleConfirm}
-        />
-      )}
+      {dialogOpen && <AddCollectionDialog onClose={() => setDialogOpen(false)} onConfirm={handleConfirm} />}
     </div>
   );
 }

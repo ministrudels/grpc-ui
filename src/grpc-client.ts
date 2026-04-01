@@ -192,7 +192,7 @@ function runReflection(url: string, ClientCtor: grpc.ServiceClientConstructor): 
   const client = new ClientCtor(url, grpc.credentials.createInsecure());
 
   return new Promise((resolve, reject) => {
-    const deadline = new Date(Date.now() + 10_000);
+    const deadline = new Date(Date.now() + 30_000);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const call = (client as any).ServerReflectionInfo({ deadline });
     const allServices: GrpcService[] = [];
@@ -330,15 +330,33 @@ export async function sendRequest(args: SendRequestArgs): Promise<unknown> {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const root: protobuf.Root = (protobuf.Root as any).fromDescriptor(fileSetBytes);
-  root.resolveAll();
+  try {
+    root.resolveAll();
+  } catch (e) {
+    throw new Error(`[resolveAll] Failed to resolve type graph: ${(e as Error).message}`);
+  }
 
-  // Strip leading dot — proto fully-qualified names like ".pkg.Foo" and "pkg.Foo" both valid
-  const RequestType = root.lookupType(requestType.replace(/^\./, ""));
-  const ResponseType = root.lookupType(responseType.replace(/^\./, ""));
+  let RequestType: protobuf.Type;
+  let ResponseType: protobuf.Type;
+  try {
+    RequestType = root.lookupType(requestType.replace(/^\./, ""));
+  } catch (e) {
+    throw new Error(`[lookupType] Request type not found: ${requestType} — ${(e as Error).message}`);
+  }
+  try {
+    ResponseType = root.lookupType(responseType.replace(/^\./, ""));
+  } catch (e) {
+    throw new Error(`[lookupType] Response type not found: ${responseType} — ${(e as Error).message}`);
+  }
 
-  const requestObj = JSON.parse(requestJson) as Record<string, unknown>;
-  const requestMessage = RequestType.fromObject(requestObj);
-  const requestBytes = Buffer.from(RequestType.encode(requestMessage).finish());
+  let requestBytes: Buffer;
+  try {
+    const requestObj = JSON.parse(requestJson) as Record<string, unknown>;
+    const requestMessage = RequestType.fromObject(requestObj);
+    requestBytes = Buffer.from(RequestType.encode(requestMessage).finish());
+  } catch (e) {
+    throw new Error(`[encode] Failed to encode request: ${(e as Error).message}`);
+  }
 
   const client = new grpc.Client(url, grpc.credentials.createInsecure());
   return new Promise((resolve, reject) => {
@@ -346,7 +364,13 @@ export async function sendRequest(args: SendRequestArgs): Promise<unknown> {
     client.makeUnaryRequest(
       `/${serviceName}/${methodName}`,
       (req: Buffer) => req,
-      (buf: Buffer) => ResponseType.toObject(ResponseType.decode(buf), { defaults: true, arrays: true }),
+      (buf: Buffer) => {
+        try {
+          return ResponseType.toObject(ResponseType.decode(buf), { defaults: true, arrays: true });
+        } catch (e) {
+          throw new Error(`[decode] Failed to decode response: ${(e as Error).message}`);
+        }
+      },
       requestBytes,
       new grpc.Metadata(),
       { deadline },
