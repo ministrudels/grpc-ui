@@ -46,12 +46,12 @@
 
 ## Phase 6 — Polish (stretch)
 
-- [ ] 30. Pretty-print request/response JSON with syntax highlighting
+- [x] 30. Pretty-print request/response JSON with syntax highlighting
 - [ ] 31. Allow editing request metadata / headers
 - [ ] 32. Support client-streaming, server-streaming, and bidirectional-streaming RPCs
 - [ ] 33. Allow renaming or deleting a collection from the sidebar
 - [ ] 34. Colour-code kinds of gRPC methods (unary, client-streaming, server-streaming, bidi-streaming) in the sidebar
-- [ ] 35. Use a syntax-highlighting code editor component instead of a plain `<textarea>` for request bodies
+- [x] 35. Use a syntax-highlighting code editor component instead of a plain `<textarea>` for request bodies
 - [ ] 36. End to end tests for sending requests and displaying responses (mock gRPC server in test fixture that serves canned responses based on request content). This is a big task and can be deferred until after the MVP is stable.
 - [x] 37. Add keyboard shortcut cmd + enter to send request
 - [ ] 38. Add "Copy response to clipboard" button in the Response panel
