@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Service from "../Service";
 import type { GrpcMessage, GrpcService } from "../../global";
 import type { SelectedMethod } from "../../App";
@@ -28,6 +29,8 @@ interface Props {
 export default function Collection({ collection, selectedMethod, onSelectMethod, onResync, onDelete }: Props) {
   const [open, setOpen] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number } | null>(null);
+  const resyncRef = useRef<HTMLButtonElement>(null);
 
   function handleResync(e: React.MouseEvent) {
     e.stopPropagation();
@@ -43,6 +46,17 @@ export default function Collection({ collection, selectedMethod, onSelectMethod,
     }
   }
 
+  function showTooltip() {
+    if (resyncRef.current) {
+      const rect = resyncRef.current.getBoundingClientRect();
+      setTooltipPos({ top: rect.bottom + 6, left: rect.left + rect.width / 2 });
+    }
+  }
+
+  function hideTooltip() {
+    setTooltipPos(null);
+  }
+
   return (
     <div>
       <div className="collection-header" title={collection.url} onClick={() => setOpen((o) => !o)}>
@@ -50,28 +64,45 @@ export default function Collection({ collection, selectedMethod, onSelectMethod,
         <span className="collection-name">{collection.name}</span>
         <div className="collection-actions">
           <button
+            ref={resyncRef}
             className={`resync-btn${syncing ? " syncing" : ""}`}
-            title={`Resync ${collection.url}`}
             onClick={handleResync}
+            onMouseEnter={showTooltip}
+            onMouseLeave={hideTooltip}
           >
             ↻
           </button>
+          {tooltipPos &&
+            createPortal(
+              <div className="resync-tooltip" style={{ top: tooltipPos.top, left: tooltipPos.left }}>
+                <strong>Resync collection</strong>
+                <span>
+                  Re-runs gRPC reflection against
+                  <br />
+                  {collection.url}
+                  <br />
+                  to pick up any new or changed services.
+                </span>
+              </div>,
+              document.body
+            )}
           <button className="delete-btn" title="Delete collection" onClick={handleDelete}>
             🗑
           </button>
         </div>
       </div>
 
-      {open && collection.services.map((svc) => (
-        <Service
-          key={svc.name}
-          service={svc}
-          collectionUrl={collection.url}
-          messages={collection.messages}
-          selectedMethod={selectedMethod}
-          onSelectMethod={onSelectMethod}
-        />
-      ))}
+      {open &&
+        collection.services.map((svc) => (
+          <Service
+            key={svc.name}
+            service={svc}
+            collectionUrl={collection.url}
+            messages={collection.messages}
+            selectedMethod={selectedMethod}
+            onSelectMethod={onSelectMethod}
+          />
+        ))}
     </div>
   );
 }
