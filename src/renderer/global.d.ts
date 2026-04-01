@@ -57,6 +57,7 @@ declare global {
     grpcui: {
       connectServer: (url: string) => Promise<Collection>;
       sendRequest: (args: SendRequestArgs) => Promise<unknown>;
+      cancelRequest: () => void;
       onReflectProgress: (cb: (progress: ReflectProgress) => void) => () => void;
     };
   }

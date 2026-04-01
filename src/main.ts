@@ -26,8 +26,19 @@ ipcMain.handle("grpc:connect-server", async (event, url: string) => {
   });
 });
 
+let currentRequestAbort: AbortController | null = null;
+
 ipcMain.handle("grpc:send-request", async (_event, args) => {
-  return sendRequest(args);
+  currentRequestAbort = new AbortController();
+  try {
+    return await sendRequest(args, currentRequestAbort.signal);
+  } finally {
+    currentRequestAbort = null;
+  }
+});
+
+ipcMain.on("grpc:cancel-request", () => {
+  currentRequestAbort?.abort();
 });
 
 app.whenReady().then(createWindow);

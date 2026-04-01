@@ -31,3 +31,16 @@
 .send-btn:disabled {
   cursor: default;
 }
+.cancel-btn {
+  background: #f38ba8;
+  border: none;
+  border-radius: 4px;
+  color: #1a1a1a;
+  font-size: 13px;
+  padding: 6px 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.cancel-btn:hover {
+  background: #f5a0b5;
+}

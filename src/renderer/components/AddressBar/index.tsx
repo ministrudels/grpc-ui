@@ -5,14 +5,10 @@ interface Props {
   canSend: boolean;
   sending: boolean;
   onSend: () => void;
+  onCancel: () => void;
 }
 
-/**
- * Top bar showing the target server URL for the selected method alongside
- * the Send button. The button is enabled only when a method is selected and
- * no request is in flight, and switches to a "Sending…" label during loading.
- */
-export default function AddressBar({ url, canSend, sending, onSend }: Props) {
+export default function AddressBar({ url, canSend, sending, onSend, onCancel }: Props) {
   return (
     <div className="address-bar">
       <input
@@ -21,9 +17,11 @@ export default function AddressBar({ url, canSend, sending, onSend }: Props) {
         placeholder="Select a method from the sidebar"
         readOnly
       />
-      <button className="send-btn" disabled={!canSend} onClick={onSend}>
-        {sending ? "Sending…" : "Send"}
-      </button>
+      {sending ? (
+        <button className="cancel-btn" onClick={onCancel}>Cancel</button>
+      ) : (
+        <button className="send-btn" disabled={!canSend} onClick={onSend}>Send</button>
+      )}
     </div>
   );
 }

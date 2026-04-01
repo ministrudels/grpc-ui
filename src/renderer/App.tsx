@@ -181,7 +181,8 @@ export default function App() {
       });
       setResponse(res);
     } catch (err: unknown) {
-      setResponseError((err as Error).message ?? "Request failed");
+      const msg = (err as Error).message ?? "Request failed";
+      if (msg !== "Cancelled") setResponseError(msg);
     } finally {
       setSending(false);
     }
@@ -202,6 +203,7 @@ export default function App() {
             canSend={!!selectedMethod && !sending}
             sending={sending}
             onSend={handleSend}
+            onCancel={() => window.grpcui.cancelRequest()}
           />
         </div>
         <div style={styles.panels}>

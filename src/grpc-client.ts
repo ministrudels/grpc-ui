@@ -347,7 +347,7 @@ export async function discoverServices(
 
 // ── sendRequest ───────────────────────────────────────────────────────────────
 
-export async function sendRequest(args: SendRequestArgs): Promise<unknown> {
+export async function sendRequest(args: SendRequestArgs, signal?: AbortSignal): Promise<unknown> {
   const { url, serviceName, methodName, requestType, responseType, requestJson, fileDescriptors } = args;
 
   // Re-encode individual FileDescriptorProtos into a FileDescriptorSet binary so
@@ -409,7 +409,7 @@ export async function sendRequest(args: SendRequestArgs): Promise<unknown> {
   const client = new grpc.Client(url, grpc.credentials.createInsecure());
   return new Promise((resolve, reject) => {
     const deadline = new Date(Date.now() + 30_000);
-    client.makeUnaryRequest(
+    const call = client.makeUnaryRequest(
       `/${serviceName}/${methodName}`,
       (req: Buffer) => req,
       (buf: Buffer) => {
@@ -428,5 +428,10 @@ export async function sendRequest(args: SendRequestArgs): Promise<unknown> {
         else resolve(response);
       }
     );
+    signal?.addEventListener("abort", () => {
+      call.cancel();
+      client.close();
+      reject(new Error("Cancelled"));
+    }, { once: true });
   });
 }
