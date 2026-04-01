@@ -29,8 +29,11 @@ interface Props {
 export default function Sidebar({ collections, onCollectionsChange, selectedMethod, onSelectMethod }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [resyncing, setResyncing] = useState(0);
   const [connectError, setConnectError] = useState<string | null>(null);
   const [resyncErrors, setResyncErrors] = useState<Record<string, string>>({});
+
+  const busy = loading || resyncing > 0;
 
   function handleDelete(url: string) {
     onCollectionsChange(collections.filter((c) => c.url !== url));
@@ -39,6 +42,7 @@ export default function Sidebar({ collections, onCollectionsChange, selectedMeth
   async function handleResync(url: string): Promise<void> {
     const existing = collections.find((c) => c.url === url);
     if (!existing) return;
+    setResyncing((n) => n + 1);
     try {
       const fresh = await window.grpcui.connectServer(url);
       onCollectionsChange(collections.map((c) => (c.url === url ? { ...fresh, name: existing.name } : c)));
@@ -49,6 +53,8 @@ export default function Sidebar({ collections, onCollectionsChange, selectedMeth
       });
     } catch (err) {
       setResyncErrors((prev) => ({ ...prev, [url]: (err as Error).message ?? "Failed to resync" }));
+    } finally {
+      setResyncing((n) => n - 1);
     }
   }
 
@@ -67,7 +73,12 @@ export default function Sidebar({ collections, onCollectionsChange, selectedMeth
 
   return (
     <div className="sidebar">
-      <button className="sidebar-add-btn" onClick={() => setDialogOpen(true)} disabled={loading}>
+      {busy && (
+        <div className="sidebar-overlay">
+          <div className="sidebar-overlay-spinner" />
+        </div>
+      )}
+      <button className="sidebar-add-btn" onClick={() => setDialogOpen(true)} disabled={busy}>
         {loading ? (
           <span className="sidebar-spinner">
             <span className="sidebar-spinner-icon" />

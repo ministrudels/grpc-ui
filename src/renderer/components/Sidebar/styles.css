@@ -1,4 +1,5 @@
 .sidebar {
+  position: relative;
   width: 240px;
   flex-shrink: 0;
   border-right: 1px solid #2d2d2d;
@@ -9,6 +10,23 @@
   color: #686868;
   font-size: 13px;
   overflow-y: auto;
+}
+.sidebar-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(26, 26, 26, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+.sidebar-overlay-spinner {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid #3a3a3a;
+  border-top-color: #cba6f7;
+  animation: spin 0.7s linear infinite;
 }
 .sidebar-add-btn {
   background: #2d2d2d;
