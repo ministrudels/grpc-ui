@@ -36,13 +36,13 @@
 
 ## Phase 5 — Send request & display response
 
-- [ ] 23. Add IPC channel `grpc:send-request` in `main.ts` that accepts `{ url, service, method, requestJson }`
-- [ ] 24. Expose `window.grpcui.sendRequest(...)` in `preload.ts`
-- [ ] 25. In `main.ts`, build a dynamic proto descriptor from the stored `FileDescriptorProto` bytes and call the selected method via `@grpc/grpc-js` (unary MVP)
-- [ ] 26. Implement Send button in the Request panel; disable while a call is in-flight; show a loading indicator
-- [ ] 27. Display the response JSON in the Response panel on success
-- [ ] 28. Display errors (gRPC status code + message) in the Response panel on failure
-- [ ] 29. Add a 30-second deadline to all request calls
+- [x] 23. Add IPC channel `grpc:send-request` in `main.ts` that accepts `{ url, service, method, requestJson }`
+- [x] 24. Expose `window.grpcui.sendRequest(...)` in `preload.ts`
+- [x] 25. In `main.ts`, build a dynamic proto descriptor from the stored `FileDescriptorProto` bytes and call the selected method via `@grpc/grpc-js` (unary MVP)
+- [x] 26. Implement Send button in the Request panel; disable while a call is in-flight; show a loading indicator
+- [x] 27. Display the response JSON in the Response panel on success
+- [x] 28. Display errors (gRPC status code + message) in the Response panel on failure
+- [x] 29. Add a 30-second deadline to all request calls
 
 ## Phase 6 — Polish (stretch)
 
