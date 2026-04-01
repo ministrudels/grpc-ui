@@ -13,7 +13,7 @@ function createWindow(): void {
     },
   });
 
-  if (!app.isPackaged) {
+  if (!app.isPackaged && !process.env.PLAYWRIGHT) {
     win.loadURL("http://localhost:5173");
   } else {
     win.loadFile(path.join(__dirname, "../renderer/index.html"));

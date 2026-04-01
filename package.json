@@ -7,7 +7,9 @@
     "build": "vite build && tsc -p tsconfig.main.json && rm -rf dist/proto && cp -r src/proto dist/proto",
     "start": "npm run build && electron .",
     "test": "vitest run",
-    "dump-storage": "node scripts/dump-storage.js"
+    "dump-storage": "node scripts/dump-storage.js",
+    "e2e": "npm run build && playwright test",
+    "e2e:ui": "npm run build && playwright test --ui"
   },
   "keywords": [],
   "author": "",
@@ -22,13 +24,14 @@
   "devDependencies": {
     "@grpc/proto-loader": "^0.8.0",
     "@grpc/reflection": "^1.0.4",
+    "@playwright/test": "^1.59.1",
     "@types/node": "^25.5.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
     "classic-level": "^3.0.0",
     "concurrently": "^9.1.2",
-    "electron": "^41.1.0",
+    "electron": "^35.7.5",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.2",
     "vite": "^6.0.7",
