@@ -20,6 +20,13 @@
   justify-content: center;
   z-index: 10;
 }
+.sidebar-overlay-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 80%;
+}
 .sidebar-overlay-spinner {
   width: 28px;
   height: 28px;
@@ -27,6 +34,15 @@
   border: 3px solid #3a3a3a;
   border-top-color: #cba6f7;
   animation: spin 0.7s linear infinite;
+}
+.sidebar-overlay-label {
+  color: #a6adc8;
+  font-size: 11px;
+  text-align: center;
+  background: #1e1e2e;
+  border: 1px solid #313244;
+  border-radius: 6px;
+  padding: 6px 10px;
 }
 .sidebar-add-btn {
   background: #2d2d2d;

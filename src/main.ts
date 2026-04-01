@@ -20,8 +20,10 @@ function createWindow(): void {
   }
 }
 
-ipcMain.handle("grpc:connect-server", async (_event, url: string) => {
-  return discoverServices(url);
+ipcMain.handle("grpc:connect-server", async (event, url: string) => {
+  return discoverServices(url, (progress) => {
+    event.sender.send("grpc:reflect-progress", progress);
+  });
 });
 
 ipcMain.handle("grpc:send-request", async (_event, args) => {

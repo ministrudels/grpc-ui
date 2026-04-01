@@ -5,4 +5,9 @@ contextBridge.exposeInMainWorld("grpcui", {
     ipcRenderer.invoke("grpc:connect-server", url),
   sendRequest: (args: unknown) =>
     ipcRenderer.invoke("grpc:send-request", args),
+  onReflectProgress: (cb: (progress: unknown) => void) => {
+    const listener = (_event: unknown, progress: unknown) => cb(progress);
+    ipcRenderer.on("grpc:reflect-progress", listener as Parameters<typeof ipcRenderer.on>[1]);
+    return () => ipcRenderer.removeListener("grpc:reflect-progress", listener as Parameters<typeof ipcRenderer.removeListener>[1]);
+  },
 });

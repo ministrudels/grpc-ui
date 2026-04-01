@@ -188,7 +188,11 @@ function parseDescriptors(descriptors: RawDescriptor[], scope: string): GrpcMess
 
 // ── Core reflection logic ─────────────────────────────────────────────────────
 
-function runReflection(url: string, ClientCtor: grpc.ServiceClientConstructor): Promise<Collection> {
+function runReflection(
+  url: string,
+  ClientCtor: grpc.ServiceClientConstructor,
+  onProgress?: (progress: ReflectProgress) => void
+): Promise<Collection> {
   const client = new ClientCtor(url, grpc.credentials.createInsecure());
 
   return new Promise((resolve, reject) => {
@@ -203,6 +207,7 @@ function runReflection(url: string, ClientCtor: grpc.ServiceClientConstructor): 
     const requestedSymbols = new Set<string>();
     let pendingSymbols = 0;
     let listDone = false;
+    let servicesFound = 0;
 
     function maybeFinish() {
       if (!listDone || pendingSymbols > 0) return;
@@ -288,7 +293,9 @@ function runReflection(url: string, ClientCtor: grpc.ServiceClientConstructor): 
           .filter((n) => !n.startsWith("grpc.reflection."));
 
         listDone = true;
+        servicesFound = names.length;
         pendingSymbols = names.length;
+        onProgress?.({ url, stage: "fetching", servicesFound, filesFetched: 0, pending: pendingSymbols });
         if (names.length === 0) {
           maybeFinish();
           return;
@@ -301,6 +308,7 @@ function runReflection(url: string, ClientCtor: grpc.ServiceClientConstructor): 
         const protos: Uint8Array[] = response.fileDescriptorResponse.fileDescriptorProto ?? [];
         processFileDescriptors(protos);
         pendingSymbols--;
+        onProgress?.({ url, stage: "fetching", servicesFound, filesFetched: allFileDescriptors.length, pending: pendingSymbols });
         maybeFinish();
       } else if (response.errorResponse) {
         pendingSymbols--;
@@ -312,18 +320,26 @@ function runReflection(url: string, ClientCtor: grpc.ServiceClientConstructor): 
       client.close();
       reject(err);
     });
+    onProgress?.({ url, stage: "listing" });
     call.write({ listServices: "" });
   });
 }
 
 // ── discoverServices ──────────────────────────────────────────────────────────
 
-export async function discoverServices(url: string): Promise<Collection> {
+export type ReflectProgress =
+  | { url: string; stage: "listing" }
+  | { url: string; stage: "fetching"; servicesFound: number; filesFetched: number; pending: number };
+
+export async function discoverServices(
+  url: string,
+  onProgress?: (progress: ReflectProgress) => void
+): Promise<Collection> {
   try {
-    return await runReflection(url, ClientCtors.v1alpha);
+    return await runReflection(url, ClientCtors.v1alpha, onProgress);
   } catch (err: unknown) {
     if ((err as { code?: number }).code === grpc.status.UNIMPLEMENTED) {
-      return runReflection(url, ClientCtors.v1);
+      return runReflection(url, ClientCtors.v1, onProgress);
     }
     throw err;
   }

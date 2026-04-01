@@ -48,11 +48,16 @@ export interface SendRequestArgs {
   fileDescriptors: string[];
 }
 
+export type ReflectProgress =
+  | { url: string; stage: "listing" }
+  | { url: string; stage: "fetching"; servicesFound: number; filesFetched: number; pending: number };
+
 declare global {
   interface Window {
     grpcui: {
       connectServer: (url: string) => Promise<Collection>;
       sendRequest: (args: SendRequestArgs) => Promise<unknown>;
+      onReflectProgress: (cb: (progress: ReflectProgress) => void) => () => void;
     };
   }
 }
