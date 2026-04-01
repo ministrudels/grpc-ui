@@ -222,7 +222,7 @@ export default function App() {
         <div style={styles.panels}>
           {selectedMethod ? (
             <>
-              <RequestBody value={requestBody} onChange={setRequestBody} />
+              <RequestBody value={requestBody} onChange={setRequestBody} onSend={handleSend} />
               <ResponsePanel response={response} error={responseError} loading={sending} />
             </>
           ) : (
