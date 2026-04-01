@@ -5,6 +5,7 @@
  */
 const path = require("path");
 const os = require("os");
+const fs = require("fs");
 const { ClassicLevel } = require("classic-level");
 
 const userDataPaths = {
@@ -20,6 +21,26 @@ if (!userData) {
 }
 
 const dbPath = path.join(userData, "Local Storage", "leveldb");
+
+// Replace base64 blobs (fileDescriptors) with a human-readable summary.
+function redact(val) {
+  if (Array.isArray(val)) return val.map(redact);
+  if (val && typeof val === "object") {
+    return Object.fromEntries(
+      Object.entries(val).map(([k, v]) => {
+        if (k === "fileDescriptors" && Array.isArray(v)) {
+          const bytes = v.reduce((n, b64) => n + Buffer.from(b64, "base64").length, 0);
+          return [k, `<${v.length} descriptor${v.length !== 1 ? "s" : ""}, ${(bytes / 1024).toFixed(1)} KB>`];
+        }
+        if (k === "messages" && Array.isArray(v)) {
+          return [k, `<${v.length} message type${v.length !== 1 ? "s" : ""}>`];
+        }
+        return [k, redact(v)];
+      })
+    );
+  }
+  return val;
+}
 
 // Chromium localStorage LevelDB format (shared-db layout):
 //   key:   "_<origin>\x00\x01<localStorage_key>"  (UTF-8)
@@ -63,7 +84,7 @@ async function main() {
       parsed = rawVal;
     }
 
-    (byOrigin[origin] ??= {})[jsKey] = parsed;
+    (byOrigin[origin] ??= {})[jsKey] = redact(parsed);
   }
 
   await db.close();
@@ -73,15 +94,15 @@ async function main() {
     return;
   }
 
-  for (const [origin, keys] of Object.entries(byOrigin)) {
-    console.log(`\n${"═".repeat(64)}`);
-    console.log(`  ${origin}`);
-    console.log(`${"═".repeat(64)}`);
-    for (const [key, value] of Object.entries(keys)) {
-      console.log(`\n  ── ${key}`);
-      console.log(typeof value === "string" ? `  ${value}` : JSON.stringify(value, null, 2).replace(/^/gm, "  "));
-    }
-  }
+  const now = new Date();
+  const datestamp = now.toISOString().slice(0, 19).replace("T", "_").replace(/:/g, "-");
+  const collections = Object.values(byOrigin).flatMap((keys) => keys["grpcui:collections"] ?? []);
+  const outDir = path.join(__dirname, "../storage-dumps");
+  const outFile = path.join(outDir, `${datestamp}_${collections.length}-collections.json`);
+
+  fs.mkdirSync(outDir, { recursive: true });
+  fs.writeFileSync(outFile, JSON.stringify(byOrigin, null, 2));
+  console.log(`Written to ${outFile}`);
 }
 
 main().catch((err) => {
