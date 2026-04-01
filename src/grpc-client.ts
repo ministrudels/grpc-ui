@@ -360,12 +360,28 @@ export async function sendRequest(args: SendRequestArgs): Promise<unknown> {
   }
   const fileSetBytes = Buffer.from(writer.finish());
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const root: protobuf.Root = (protobuf.Root as any).fromDescriptor(fileSetBytes);
+  // fromDescriptor populates the root then calls root.resolveAll() as its final step.
+  // If the descriptor set contains `extend .google.protobuf.EnumValueOptions` (custom enum
+  // annotations), resolveAll() throws because descriptor.proto (which defines EnumValueOptions)
+  // is a well-known type that servers don't serve via reflection. These extensions are metadata
+  // only — they don't affect wire encoding. We intercept resolveAll on the prototype for the
+  // duration of this call so the root is returned fully built rather than lost to the throw.
+  const origResolveAll = protobuf.Root.prototype.resolveAll;
+  protobuf.Root.prototype.resolveAll = function (this: protobuf.Root) {
+    try {
+      return origResolveAll.call(this);
+    } catch (e) {
+      const msg = (e as Error).message ?? "";
+      if (msg.startsWith("unresolvable extensions")) return this;
+      throw e;
+    }
+  };
+  let root: protobuf.Root;
   try {
-    root.resolveAll();
-  } catch (e) {
-    throw new Error(`[resolveAll] Failed to resolve type graph: ${(e as Error).message}`);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    root = (protobuf.Root as any).fromDescriptor(fileSetBytes);
+  } finally {
+    protobuf.Root.prototype.resolveAll = origResolveAll;
   }
 
   let RequestType: protobuf.Type;

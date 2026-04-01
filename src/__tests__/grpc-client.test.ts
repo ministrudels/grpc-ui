@@ -21,6 +21,7 @@ import path from "path";
 import { discoverServices, sendRequest } from "../grpc-client";
 
 const GREETER_PROTO = path.join(__dirname, "fixtures/greeter.proto");
+const EXTENDED_ENUM_PROTO = path.join(__dirname, "fixtures/extended-enum.proto");
 
 // ── Shared server factory ─────────────────────────────────────────────────────
 
@@ -80,6 +81,73 @@ function assertGreeterCollection(collection: Awaited<ReturnType<typeof discoverS
   // Collection must carry raw file descriptors for later method invocation
   expect(collection.fileDescriptors.length).toBeGreaterThan(0);
 }
+
+// ── Group 0: Server with custom enum value options (extend EnumValueOptions) ──
+//
+// Servers that annotate enum values with custom protobuf options produce
+// FileDescriptorProtos that reference google.protobuf.EnumValueOptions.
+// That type lives in descriptor.proto, which servers do not serve via
+// reflection. resolveAll() must tolerate this without throwing.
+
+describe("against a server with custom enum value options", () => {
+  let server: grpc.Server;
+  let port: number;
+
+  beforeAll(async () => {
+    const packageDef = protoLoader.loadSync(EXTENDED_ENUM_PROTO, {
+      keepCase: false,
+      longs: String,
+      enums: String,
+      defaults: true,
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pkg = grpc.loadPackageDefinition(packageDef) as any;
+
+    server = new grpc.Server();
+    server.addService(pkg.extended.StatusService.service, {
+      getStatus: (_call: grpc.ServerUnaryCall<unknown, unknown>, callback: grpc.sendUnaryData<unknown>) =>
+        callback(null, { status: "ACTIVE" }),
+    });
+
+    const reflection = new ReflectionService(packageDef);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (reflection as any).v1.addToServer(server);
+
+    port = await new Promise<number>((resolve, reject) => {
+      server.bindAsync("0.0.0.0:0", grpc.ServerCredentials.createInsecure(), (err, p) =>
+        err ? reject(err) : resolve(p),
+      );
+    });
+  });
+
+  afterAll(() => new Promise<void>((resolve, reject) => server.tryShutdown((err) => (err ? reject(err) : resolve()))));
+
+  it("discovers services without throwing on unresolvable extensions", async () => {
+    const collection = await discoverServices(`localhost:${port}`);
+    const svc = collection.services.find((s) => s.name === "extended.StatusService");
+    expect(svc).toBeDefined();
+    expect(svc!.methods.find((m) => m.name === "GetStatus")).toBeDefined();
+  });
+
+  it("can invoke a method when the descriptor set contains unresolvable extensions", async () => {
+    const url = `localhost:${port}`;
+    const collection = await discoverServices(url);
+    const svc = collection.services.find((s) => s.name === "extended.StatusService")!;
+    const method = svc.methods.find((m) => m.name === "GetStatus")!;
+
+    const response = await sendRequest({
+      url,
+      serviceName: svc.name,
+      methodName: method.name,
+      requestType: method.requestType,
+      responseType: method.responseType,
+      requestJson: JSON.stringify({}),
+      fileDescriptors: collection.fileDescriptors,
+    });
+
+    expect(response).toMatchObject({ status: expect.any(Number) });
+  });
+});
 
 // ── Group 1: Modern server (v1 only) ─────────────────────────────────────────
 

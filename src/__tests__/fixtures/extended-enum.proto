@@ -1,0 +1,27 @@
+syntax = "proto3";
+package extended;
+
+import "google/protobuf/descriptor.proto";
+
+// Simulates servers that annotate enum values with custom options —
+// a common pattern that causes `resolveAll()` to fail if descriptor.proto
+// is not included in the reflection descriptor set.
+extend google.protobuf.EnumValueOptions {
+  string display_name = 50000;
+}
+
+enum Status {
+  UNKNOWN = 0 [(display_name) = "Unknown"];
+  ACTIVE  = 1 [(display_name) = "Active"];
+  INACTIVE = 2 [(display_name) = "Inactive"];
+}
+
+service StatusService {
+  rpc GetStatus (GetStatusRequest) returns (GetStatusResponse);
+}
+
+message GetStatusRequest {}
+
+message GetStatusResponse {
+  Status status = 1;
+}
