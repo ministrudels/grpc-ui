@@ -1,4 +1,5 @@
 import { test, expect, seedCollection } from "./fixtures";
+import type { Page } from "@playwright/test";
 
 const COLLECTION_WITH_METHOD = {
   url: "localhost:50051",
@@ -21,6 +22,50 @@ const COLLECTION_WITH_METHOD = {
   // Non-empty so App.tsx doesn't short-circuit with "No schema available"
   fileDescriptors: ["AAAA"],
 };
+
+/** Clear persisted collections and add one via the dialog, then wait for sync. */
+async function addCollection(window: Page, name: string, url: string) {
+  // Clear any collections persisted to disk from previous test runs
+  await window.evaluate(() => localStorage.removeItem("grpcui:collections"));
+  await window.reload();
+  await window.waitForLoadState("domcontentloaded");
+
+  await window.locator(".sidebar-add-btn").click();
+  await window.locator(".dialog-input").nth(0).fill(name);
+  await window.locator(".dialog-input").nth(1).fill(url);
+  await window.locator(".dialog-confirm").click();
+  // Wait until the loading overlay disappears
+  await window.locator(".sidebar-overlay").waitFor({ state: "hidden" });
+}
+
+test.describe("happy path", () => {
+  test("add collection → sidebar populates with services and methods", async ({ window, grpcServer }) => {
+    await addCollection(window, "Greeter", `localhost:${grpcServer.port}`);
+
+    await expect(window.locator(".service-name")).toBeVisible();
+    await expect(window.locator(".method-name").filter({ hasText: "SayHello" }).first()).toBeVisible();
+  });
+
+  test("select method → send request → response panel shows result", async ({ window, grpcServer }) => {
+    await addCollection(window, "Greeter", `localhost:${grpcServer.port}`);
+
+    await window.locator(".method").filter({ hasText: "SayHello" }).first().click();
+    await window.locator(".send-btn").click();
+
+    // Response panel should show the Monaco editor (success, not error)
+    await expect(window.locator(".response-editor")).toBeVisible({ timeout: 10_000 });
+    await expect(window.locator(".response-error")).not.toBeVisible();
+  });
+
+  test("successful response contains expected JSON", async ({ window, grpcServer }) => {
+    await addCollection(window, "Greeter", `localhost:${grpcServer.port}`);
+
+    await window.locator(".method").filter({ hasText: "SayHello" }).first().click();
+    await window.locator(".send-btn").click();
+
+    await expect(window.locator(".response-editor")).toContainText("Hello from test server", { timeout: 10_000 });
+  });
+});
 
 test.describe("sync button", () => {
   test("stays disabled while request is in-flight", async ({ app, window }) => {

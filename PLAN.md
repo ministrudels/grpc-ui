@@ -52,7 +52,7 @@
 - [ ] 33. Allow renaming or deleting a collection from the sidebar
 - [x] 34. Colour-code kinds of gRPC methods (unary, client-streaming, server-streaming, bidi-streaming) in the sidebar
 - [x] 35. Use a syntax-highlighting code editor component instead of a plain `<textarea>` for request bodies
-- [ ] 36. End to end tests for sending requests and displaying responses (mock gRPC server in test fixture that serves canned responses based on request content). This is a big task and can be deferred until after the MVP is stable.
+- [x] 36. End to end tests for sending requests and displaying responses (mock gRPC server in test fixture that serves canned responses based on request content). This is a big task and can be deferred until after the MVP is stable.
 - [x] 37. Add keyboard shortcut cmd + enter to send request
 - [x] 38. Add "Copy response to clipboard" button in the Response panel
 - [x] 39. When hovering over add Collection, highlight the button
