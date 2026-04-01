@@ -87,13 +87,17 @@ export default function Sidebar({ collections, onCollectionsChange, selectedMeth
             <div className="sidebar-overlay-spinner" />
             {progress && (
               <span className="sidebar-overlay-label">
-                {progress.stage === "listing"
-                  ? "Asking server for available services…"
-                  : <>
-                      {`Discovered ${progress.servicesFound} service${progress.servicesFound !== 1 ? "s" : ""} — downloading proto schemas`}
-                      <br />
-                      {`${progress.filesFetched} fetched, ${progress.pending} dependencies remaining`}
-                    </>}
+                {progress.stage === "listing" ? (
+                  "Asking server for available services…"
+                ) : (
+                  <>
+                    {`Discovered ${progress.servicesFound} service${progress.servicesFound !== 1 ? "s" : ""}`}
+                    <br />
+                    Fetching schemas
+                    <br />
+                    {`${progress.filesFetched} proto files saved · ${progress.pending} reflection requests pending`}
+                  </>
+                )}
               </span>
             )}
           </div>
