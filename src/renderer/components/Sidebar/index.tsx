@@ -36,30 +36,29 @@ export default function Sidebar({ collections, onCollectionsChange, selectedMeth
     onCollectionsChange(collections.filter((c) => c.url !== url));
   }
 
-  function handleResync(url: string) {
+  async function handleResync(url: string): Promise<void> {
     const existing = collections.find((c) => c.url === url);
     if (!existing) return;
-    window.grpcui
-      .connectServer(url)
-      .then((fresh) => {
-        onCollectionsChange(
-          collections.map((c) => (c.url === url ? { ...fresh, name: existing.name } : c))
-        );
-      })
-      .then(() => setResyncErrors((prev) => { const next = { ...prev }; delete next[url]; return next; }))
-      .catch((err: Error) => setResyncErrors((prev) => ({ ...prev, [url]: err.message ?? "Failed to resync" })));
+    try {
+      const fresh = await window.grpcui.connectServer(url);
+      onCollectionsChange(collections.map((c) => (c.url === url ? { ...fresh, name: existing.name } : c)));
+      setResyncErrors((prev) => { const next = { ...prev }; delete next[url]; return next; });
+    } catch (err) {
+      setResyncErrors((prev) => ({ ...prev, [url]: (err as Error).message ?? "Failed to resync" }));
+    }
   }
 
-  function handleConfirm(name: string, url: string) {
+  async function handleConfirm(name: string, url: string) {
     setLoading(true);
     setConnectError(null);
-    window.grpcui
-      .connectServer(url)
-      .then((collection) => {
-        onCollectionsChange([...collections, { ...collection, name }]);
-      })
-      .catch((err: Error) => setConnectError(err.message ?? "Failed to connect"))
-      .finally(() => setLoading(false));
+    try {
+      const collection = await window.grpcui.connectServer(url);
+      onCollectionsChange([...collections, { ...collection, name }]);
+    } catch (err) {
+      setConnectError((err as Error).message ?? "Failed to connect");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (

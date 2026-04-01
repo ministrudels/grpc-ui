@@ -17,7 +17,7 @@ interface Props {
   collection: CollectionData;
   selectedMethod: SelectedMethod | null;
   onSelectMethod: OnSelectMethod;
-  onResync: (url: string) => void;
+  onResync: (url: string) => Promise<void>;
   onDelete: (url: string) => void;
   error?: string | null;
 }
@@ -33,11 +33,15 @@ export default function Collection({ collection, selectedMethod, onSelectMethod,
   const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number } | null>(null);
   const resyncRef = useRef<HTMLButtonElement>(null);
 
-  function handleResync(e: React.MouseEvent) {
+  async function handleResync(e: React.MouseEvent) {
     e.stopPropagation();
+    if (syncing) return;
     setSyncing(true);
-    onResync(collection.url);
-    setTimeout(() => setSyncing(false), 600);
+    try {
+      await onResync(collection.url);
+    } finally {
+      setSyncing(false);
+    }
   }
 
   function handleDelete(e: React.MouseEvent) {
@@ -67,6 +71,7 @@ export default function Collection({ collection, selectedMethod, onSelectMethod,
           <button
             ref={resyncRef}
             className={`resync-btn${syncing ? " syncing" : ""}`}
+            disabled={syncing}
             onClick={handleResync}
             onMouseEnter={showTooltip}
             onMouseLeave={hideTooltip}
