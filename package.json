@@ -6,7 +6,8 @@
     "dev": "concurrently -k -n vite,electron \"vite\" \"wait-on tcp:5173 && tsc -p tsconfig.main.json && electron .\"",
     "build": "vite build && tsc -p tsconfig.main.json && rm -rf dist/proto && cp -r src/proto dist/proto",
     "start": "npm run build && electron .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "dump-storage": "node scripts/dump-storage.js"
   },
   "keywords": [],
   "author": "",
@@ -25,6 +26,7 @@
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
+    "classic-level": "^3.0.0",
     "concurrently": "^9.1.2",
     "electron": "^41.1.0",
     "ts-node": "^10.9.2",
