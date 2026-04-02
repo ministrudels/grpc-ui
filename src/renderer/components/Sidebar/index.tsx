@@ -118,21 +118,23 @@ export default function Sidebar({ collections, onCollectionsChange, selectedMeth
         </button>
       </div>
 
-      {connectError && <span className="sidebar-error">{connectError}</span>}
+      <div className="sidebar-collections">
+        {connectError && <span className="sidebar-error">{connectError}</span>}
 
-      {collections.map((col) => (
-        <Collection
-          key={col.url}
-          collection={col}
-          selectedMethod={selectedMethod}
-          onSelectMethod={onSelectMethod}
-          onResync={handleResync}
-          onDelete={handleDelete}
-          error={resyncErrors[col.url]}
-          query={query}
-          tabStatuses={tabStatuses}
-        />
-      ))}
+        {collections.map((col) => (
+          <Collection
+            key={col.url}
+            collection={col}
+            selectedMethod={selectedMethod}
+            onSelectMethod={onSelectMethod}
+            onResync={handleResync}
+            onDelete={handleDelete}
+            error={resyncErrors[col.url]}
+            query={query}
+            tabStatuses={tabStatuses}
+          />
+        ))}
+      </div>
 
       {dialogOpen && <AddCollectionDialog onClose={() => setDialogOpen(false)} onConfirm={handleConfirm} />}
     </div>
