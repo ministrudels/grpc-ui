@@ -1,6 +1,5 @@
 .request-body {
   flex: 1;
-  border-right: 1px solid #2d2d2d;
   display: flex;
   flex-direction: column;
   min-width: 0;
