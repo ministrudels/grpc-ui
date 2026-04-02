@@ -30,7 +30,9 @@ export default function ResponsePanel({ response, error, loading }: Props) {
     return (
       <div className="response-panel">
         <div className="response-label">Response</div>
-        <div className="response-body"><span className="response-loading">Sending…</span></div>
+        <div className="response-body">
+          <span className="response-loading">Sending…</span>
+        </div>
       </div>
     );
   }
@@ -38,8 +40,12 @@ export default function ResponsePanel({ response, error, loading }: Props) {
   if (error) {
     return (
       <div className="response-panel">
-        <div className="response-label">Response <CopyButton text={error} /></div>
-        <div className="response-body"><span className="response-error">{error}</span></div>
+        <div className="response-label">
+          Response <CopyButton text={error} />
+        </div>
+        <div className="response-body">
+          <span className="response-error">{error}</span>
+        </div>
       </div>
     );
   }
@@ -48,7 +54,9 @@ export default function ResponsePanel({ response, error, loading }: Props) {
     const text = JSON.stringify(response, null, 2);
     return (
       <div className="response-panel">
-        <div className="response-label">Response <CopyButton text={text} /></div>
+        <div className="response-label">
+          Response <CopyButton text={text} />
+        </div>
         <div className="response-editor">
           <Editor
             language="json"
@@ -67,7 +75,7 @@ export default function ResponsePanel({ response, error, loading }: Props) {
               overviewRulerLanes: 0,
               hideCursorInOverviewRuler: true,
               scrollbar: { verticalScrollbarSize: 6, horizontalScrollbarSize: 6 },
-              domReadOnly: true,
+              domReadOnly: true
             }}
           />
         </div>
@@ -78,7 +86,6 @@ export default function ResponsePanel({ response, error, loading }: Props) {
   return (
     <div className="response-panel">
       <div className="response-label">Response</div>
-      <div className="response-body"><span className="response-pending">Response will appear here</span></div>
     </div>
   );
 }
