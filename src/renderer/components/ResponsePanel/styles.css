@@ -4,6 +4,7 @@
   flex-direction: column;
   min-width: 0;
   min-height: 0;
+  border-left: 1px solid #2d2d2d;
 }
 /* Height must match .editor-tabs so the border lines up seamlessly */
 .response-label {
@@ -25,6 +26,7 @@
   border-radius: 3px;
   color: var(--text-secondary);
   font-size: 10px;
+  line-height: 1;
   padding: 1px 7px;
   cursor: pointer;
   letter-spacing: 0.03em;
@@ -48,14 +50,12 @@
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
-  border-left: 1px solid var(--border);
 }
 .response-loading { color: var(--status-sending); }
 .response-error   { color: var(--status-error); }
 .response-stream {
   flex: 1;
   overflow-y: auto;
-  border-left: 1px solid var(--border);
   padding: 8px 0;
 }
 .stream-message {
@@ -90,5 +90,4 @@
   flex: 1;
   overflow: hidden;
   min-height: 0;
-  border-left: 1px solid var(--border);
 }

@@ -42,20 +42,46 @@
 - [x] 26. Implement Send button in the Request panel; disable while a call is in-flight; show a loading indicator
 - [x] 27. Display the response JSON in the Response panel on success
 - [x] 28. Display errors (gRPC status code + message) in the Response panel on failure
-- [x] 29. Add a 30-second deadline to all request calls
+- [x] 29. Add a 30-second deadline to unary request calls
 
-## Phase 6 — Polish (stretch)
+## Phase 6 — Multi-tab UI
 
-- [x] 30. Pretty-print request/response JSON with syntax highlighting
-- [ ] 31. Allow editing request metadata / headers
-- [ ] 32. Support client-streaming, server-streaming, and bidirectional-streaming RPCs
-- [ ] 33. Allow renaming or deleting a collection from the sidebar
-- [x] 34. Colour-code kinds of gRPC methods (unary, client-streaming, server-streaming, bidi-streaming) in the sidebar
-- [x] 35. Use a syntax-highlighting code editor component instead of a plain `<textarea>` for request bodies
-- [x] 36. End to end tests for sending requests and displaying responses (mock gRPC server in test fixture that serves canned responses based on request content). This is a big task and can be deferred until after the MVP is stable.
-- [x] 37. Add keyboard shortcut cmd + enter to send request
-- [x] 38. Add "Copy response to clipboard" button in the Response panel
-- [x] 39. When hovering over add Collection, highlight the button
-- [x] 40. Add a trash icon next to each collection in the sidebar; clicking it prompts "Are you sure you want to delete this collection?" and if confirmed, deletes the collection and all its data
-- [ ] 41. Plan how to distribute the app via brew and/or as a downloadable binary from GitHub releases
-- [x] 42. Add Cancel send button that cancels the in-flight gRPC call.
+- [x] 43. Each selected method opens in its own tab; clicking an already-open method focuses it
+- [x] 44. Concurrent requests across tabs (each tab has independent send/cancel/response state)
+- [x] 45. Per-tab status indicator (idle / sending / success / error) shown in the tab bar and sidebar method list
+- [x] 46. Cancel button per tab; Escape key cancels the active tab's in-flight request
+- [x] 47. Elapsed timer in address bar while a request is in-flight
+- [x] 48. Fix Cmd+Enter stale-closure bug — listener registered once, reads state from a live ref
+
+## Phase 7 — Streaming RPCs
+
+- [x] 49. Colour-code method kinds (U / SS / CS / BIDI badges) in the sidebar
+- [x] 50. Server-streaming support via `makeServerStreamRequest`; messages relayed to renderer via `grpc:stream-data` IPC events
+- [x] 51. Streaming response panel: per-message blocks with Monaco syntax highlighting and right-aligned receipt timestamps
+- [x] 52. Auto-scroll response panel as streaming messages arrive
+- [x] 53. Cancelled/errored streams append a terminal error entry instead of replacing the panel; panel only resets on new send
+- [x] 54. Remove deadline from streaming calls (streams live until server closes or user cancels); use `status` event to settle promise reliably
+- [ ] 55. Client-streaming RPC support
+- [ ] 56. Bidirectional-streaming RPC support
+
+## Phase 8 — Polish & UX
+
+- [x] 30. Pretty-print request/response JSON with syntax highlighting (Monaco editor)
+- [x] 31. Request metadata editor (key/value pairs sent as gRPC metadata); toggled via Request/Metadata tabs
+- [x] 33. Delete a collection from the sidebar (trash icon with confirmation prompt)
+- [x] 34. Colour-code gRPC method kinds in the sidebar
+- [x] 35. Monaco editor for request bodies with JSON schema autocomplete
+- [x] 36. E2E tests with a real in-process gRPC server (happy path, streaming, cancel)
+- [x] 37. Cmd+Enter to send; Escape to cancel
+- [x] 38. Copy response to clipboard button in response panel header
+- [x] 39. Hover highlight on Add Collection button
+- [x] 40. Trash icon per collection with delete confirmation
+- [x] 42. Cancel button cancels in-flight gRPC call via AbortController
+- [x] 57. Freeze sidebar toolbar (search + add) when scrolling collections
+- [x] 58. Sidebar search filters methods; / or Cmd+K focuses search; Escape clears
+- [x] 59. Active method auto-scrolls into view in sidebar when switching tabs
+- [x] 60. Response panel border spans full panel height for a continuous visual divider
+
+## Phase 9 — Distribution
+
+- [ ] 41. Distribute via Homebrew and/or downloadable binary from GitHub Releases
