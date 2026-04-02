@@ -1,4 +1,5 @@
 import Editor from "@monaco-editor/react";
+import { useState } from "react";
 import "./styles.css";
 
 interface Props {
@@ -7,16 +8,37 @@ interface Props {
   loading: boolean;
 }
 
-export function responseCopyText(response: unknown, error: string | null): string | null {
-  if (error) return error;
-  if (response !== null && response !== undefined) return JSON.stringify(response, null, 2);
-  return null;
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      className={`copy-btn${copied ? " copied" : ""}`}
+      onClick={() => {
+        navigator.clipboard.writeText(text).then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        });
+      }}
+    >
+      {copied ? "Copied!" : "Copy"}
+    </button>
+  );
+}
+
+function ResponseHeader({ copyText }: { copyText?: string }) {
+  return (
+    <div className="response-label">
+      <span>Response</span>
+      {copyText && <CopyButton text={copyText} />}
+    </div>
+  );
 }
 
 export default function ResponsePanel({ response, error, loading }: Props) {
   if (loading) {
     return (
       <div className="response-panel">
+        <ResponseHeader />
         <div className="response-body">
           <span className="response-loading">Sending…</span>
         </div>
@@ -27,6 +49,7 @@ export default function ResponsePanel({ response, error, loading }: Props) {
   if (error) {
     return (
       <div className="response-panel">
+        <ResponseHeader copyText={error} />
         <div className="response-body">
           <span className="response-error">{error}</span>
         </div>
@@ -35,13 +58,15 @@ export default function ResponsePanel({ response, error, loading }: Props) {
   }
 
   if (response !== null && response !== undefined) {
+    const text = JSON.stringify(response, null, 2);
     return (
       <div className="response-panel">
+        <ResponseHeader copyText={text} />
         <div className="response-editor">
           <Editor
             language="json"
             theme="vs-dark"
-            value={JSON.stringify(response, null, 2)}
+            value={text}
             options={{
               readOnly: true,
               minimap: { enabled: false },
@@ -63,5 +88,9 @@ export default function ResponsePanel({ response, error, loading }: Props) {
     );
   }
 
-  return <div className="response-panel" />;
+  return (
+    <div className="response-panel">
+      <ResponseHeader />
+    </div>
+  );
 }
