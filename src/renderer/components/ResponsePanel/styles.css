@@ -35,8 +35,8 @@
   border-color: #555;
 }
 .copy-btn.copied {
-  color: #a6e3a1;
-  border-color: #a6e3a1;
+  color: #22c55e;
+  border-color: #22c55e;
 }
 .response-body {
   flex: 1;
@@ -49,9 +49,9 @@
   word-break: break-word;
 }
 .response-pending { color: #4a4a4a; }
-.response-loading  { color: #686868; }
-.response-error    { color: #f38ba8; }
-.response-success  { color: #a6e3a1; }
+.response-loading  { color: #3b82f6; }
+.response-error    { color: #ef4444; }
+.response-success  { color: #22c55e; }
 .response-editor {
   flex: 1;
   overflow: hidden;
