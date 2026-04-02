@@ -47,7 +47,6 @@
 .editor-tab {
   background: none;
   border: none;
-  border-bottom: 2px solid transparent;
   color: #686868;
   font-size: 12px;
   padding: 6px 14px;
@@ -55,14 +54,13 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  margin-bottom: -1px;
 }
 .editor-tab:hover {
   color: #aaaaaa;
 }
 .editor-tab.active {
   color: #e2e2e2;
-  border-bottom-color: #89b4fa;
+  box-shadow: inset 0 -2px 0 #89b4fa;
 }
 .editor-tab-badge {
   background: #3b82f6;
