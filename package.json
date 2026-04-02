@@ -1,5 +1,6 @@
 {
   "name": "grpc-ui",
+  "productName": "grpc-ui",
   "version": "1.0.0",
   "main": "dist/main/main.js",
   "scripts": {
