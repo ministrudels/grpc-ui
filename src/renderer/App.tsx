@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Sidebar from "./components/Sidebar";
 import TabBar from "./components/TabBar";
 import AddressBar from "./components/AddressBar";
@@ -56,58 +56,15 @@ function newTabId(): string {
   return Math.random().toString(36).slice(2, 9);
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  app: {
-    display: "flex",
-    height: "100vh",
-    background: "#1a1a1a",
-    color: "#e2e2e2"
-  },
-  main: {
-    flex: 1,
-    display: "flex",
-    flexDirection: "column",
-    minWidth: 0
-  },
-  topRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    padding: "8px 12px",
-    flexShrink: 0
-  },
-  panels: {
-    flex: 1,
-    display: "flex",
-    minHeight: 0
-  },
-  leftPanel: {
-    display: "flex",
-    flexDirection: "column",
-    flex: 1,
-    minWidth: 0,
-    minHeight: 0
-  },
-  placeholder: {
-    flex: 1,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: "#4a4a4a",
-    fontSize: 14
-  }
-};
-
 export default function App() {
   const [collections, setCollections] = useState<NamedCollection[]>(loadCollections);
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [snackbar, setSnackbar] = useState<{ message: string; visible: boolean }>({ message: "", visible: false });
-  const snackbarTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const snackbarTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const activeTab = tabs.find((t) => t.id === activeTabId) ?? null;
 
-  // Derived for Sidebar highlight compatibility
   const selectedMethod: SelectedMethod | null = activeTab
     ? { collectionUrl: activeTab.collectionUrl, service: activeTab.service, method: activeTab.method }
     : null;
@@ -116,7 +73,6 @@ export default function App() {
     setTabs((prev) => prev.map((t) => (t.id === id ? { ...t, ...patch } : t)));
   }
 
-  // Elapsed timer — tracks the active tab's in-flight request
   const activeSending = activeTab?.sending ?? false;
   useEffect(() => {
     if (!activeSending || !activeTabId) {
@@ -183,7 +139,7 @@ export default function App() {
       responseError: null,
       sending: false,
       elapsed: 0,
-      status: "idle"
+      status: "idle",
     };
     setTabs((prev) => [...prev, tab]);
     setActiveTabId(tab.id);
@@ -220,7 +176,7 @@ export default function App() {
           responseType: activeTab.method.responseType,
           requestJson: activeTab.requestBody,
           fileDescriptors: col.fileDescriptors,
-          metadata: activeTab.metadata
+          metadata: activeTab.metadata,
         },
         tabId
       );
@@ -229,7 +185,7 @@ export default function App() {
       const msg = (err as Error).message ?? "Request failed";
       updateTab(tabId, {
         responseError: msg.includes("Cancelled") ? "Request cancelled." : msg,
-        status: "error"
+        status: "error",
       });
     } finally {
       updateTab(tabId, { sending: false });
@@ -237,7 +193,7 @@ export default function App() {
   }
 
   return (
-    <div style={styles.app}>
+    <div className="app">
       <Sidebar
         collections={collections}
         onCollectionsChange={handleCollectionsChange}
@@ -245,9 +201,9 @@ export default function App() {
         onSelectMethod={handleSelectMethod}
         tabStatuses={new Map(tabs.map((t) => [`${t.collectionUrl}|${t.service.name}|${t.method.name}`, t.status]))}
       />
-      <div style={styles.main}>
+      <div className="app-main">
         <TabBar tabs={tabs} activeTabId={activeTabId} onSelect={setActiveTabId} onClose={handleCloseTab} />
-        <div style={styles.topRow}>
+        <div className="app-top-row">
           <AddressBar
             url={activeTab?.collectionUrl ?? ""}
             canSend={!!activeTab && !activeTab.sending}
@@ -257,10 +213,10 @@ export default function App() {
             onCancel={() => activeTab && window.grpcui.cancelRequest(activeTab.id)}
           />
         </div>
-        <div style={styles.panels}>
+        <div className="app-panels">
           {activeTab ? (
             <>
-              <div style={styles.leftPanel}>
+              <div className="app-left-panel">
                 <div className="editor-tabs">
                   <button
                     className={`editor-tab${activeTab.editorTab === "request" ? " active" : ""}`}
@@ -300,7 +256,7 @@ export default function App() {
               />
             </>
           ) : (
-            <div style={styles.placeholder}>Select a method from the sidebar to get started</div>
+            <div className="app-placeholder">Select a method from the sidebar to get started</div>
           )}
         </div>
       </div>

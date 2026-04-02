@@ -96,11 +96,6 @@
   cursor: default;
   opacity: 0.5;
 }
-.sidebar-spinner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 .sidebar-spinner-icon {
   width: 12px;
   height: 12px;

@@ -49,10 +49,8 @@
   white-space: pre-wrap;
   word-break: break-word;
 }
-.response-pending { color: #4a4a4a; }
-.response-loading  { color: #3b82f6; }
-.response-error    { color: #ef4444; }
-.response-success  { color: #22c55e; }
+.response-loading { color: #3b82f6; }
+.response-error   { color: #ef4444; }
 .response-editor {
   flex: 1;
   overflow: hidden;
