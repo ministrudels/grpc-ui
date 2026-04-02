@@ -96,7 +96,7 @@ export default function App() {
     handleSend: () => {},
     showSnackbar: () => {},
     settingsOpen: false,
-    setSettingsOpen: () => {},
+    setSettingsOpen: () => {}
   });
 
   const activeTab = tabs.find((t) => t.id === activeTabId) ?? null;
@@ -153,7 +153,13 @@ export default function App() {
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      const { activeTab: tab, handleSend: send, showSnackbar: snack, settingsOpen: isSettingsOpen, setSettingsOpen: openSettings } = latestRef.current;
+      const {
+        activeTab: tab,
+        handleSend: send,
+        showSnackbar: snack,
+        settingsOpen: isSettingsOpen,
+        setSettingsOpen: openSettings
+      } = latestRef.current;
       if (e.key === "," && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         openSettings(true);
@@ -181,7 +187,7 @@ export default function App() {
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSelectMethod: OnSelectMethod = (collectionUrl, service, method, messages) => {
@@ -206,7 +212,7 @@ export default function App() {
       responseError: null,
       sending: false,
       elapsed: 0,
-      status: "idle",
+      status: "idle"
     };
     setTabs((prev) => [...prev, tab]);
     setActiveTabId(tab.id);
@@ -261,7 +267,7 @@ export default function App() {
           requestJson: activeTab.requestBody,
           fileDescriptors: col.fileDescriptors,
           metadata: activeTab.metadata,
-          serverStreaming: isStreaming,
+          serverStreaming: isStreaming
         },
         tabId
       );
@@ -272,7 +278,7 @@ export default function App() {
       const msg = (err as Error).message ?? "Request failed";
       updateTab(tabId, {
         responseError: msg.includes("Cancelled") ? "Request cancelled." : msg,
-        status: "error",
+        status: "error"
       });
     } finally {
       unsubscribe?.();
@@ -356,11 +362,7 @@ export default function App() {
       </div>
       <Snackbar message={snackbar.message} visible={snackbar.visible} />
       {settingsOpen && (
-        <Settings
-          theme={theme}
-          onThemeChange={handleThemeChange}
-          onClose={() => setSettingsOpen(false)}
-        />
+        <Settings theme={theme} onThemeChange={handleThemeChange} onClose={() => setSettingsOpen(false)} />
       )}
     </div>
   );
