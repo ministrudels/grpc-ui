@@ -165,7 +165,23 @@ export default function App() {
       updateTab(tabId, { responseError: "No schema available — resync the collection first." });
       return;
     }
+    const isStreaming = activeTab.method.serverStreaming;
     updateTab(tabId, { sending: true, response: null, responseError: null, status: "sending" });
+
+    let unsubscribe: (() => void) | null = null;
+    if (isStreaming) {
+      unsubscribe = window.grpcui.onStreamData(({ requestId, data }) => {
+        if (requestId !== tabId) return;
+        setTabs((prev) =>
+          prev.map((t) => {
+            if (t.id !== tabId) return t;
+            const existing = Array.isArray(t.response) ? (t.response as unknown[]) : [];
+            return { ...t, response: [...existing, data] };
+          })
+        );
+      });
+    }
+
     try {
       const res = await window.grpcui.sendRequest(
         {
@@ -177,9 +193,12 @@ export default function App() {
           requestJson: activeTab.requestBody,
           fileDescriptors: col.fileDescriptors,
           metadata: activeTab.metadata,
+          serverStreaming: isStreaming,
         },
         tabId
       );
+      // For streaming, res is the complete array — use it as the source of truth.
+      // For unary, res is the single response object.
       updateTab(tabId, { response: res, status: "success" });
     } catch (err: unknown) {
       const msg = (err as Error).message ?? "Request failed";
@@ -188,6 +207,7 @@ export default function App() {
         status: "error",
       });
     } finally {
+      unsubscribe?.();
       updateTab(tabId, { sending: false });
     }
   }

@@ -12,4 +12,9 @@ contextBridge.exposeInMainWorld("grpcui", {
     ipcRenderer.on("grpc:reflect-progress", listener as Parameters<typeof ipcRenderer.on>[1]);
     return () => ipcRenderer.removeListener("grpc:reflect-progress", listener as Parameters<typeof ipcRenderer.removeListener>[1]);
   },
+  onStreamData: (cb: (payload: { requestId: string; data: unknown }) => void) => {
+    const listener = (_event: unknown, payload: unknown) => cb(payload as { requestId: string; data: unknown });
+    ipcRenderer.on("grpc:stream-data", listener as Parameters<typeof ipcRenderer.on>[1]);
+    return () => ipcRenderer.removeListener("grpc:stream-data", listener as Parameters<typeof ipcRenderer.removeListener>[1]);
+  },
 });

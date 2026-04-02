@@ -28,11 +28,13 @@ ipcMain.handle("grpc:connect-server", async (event, url: string) => {
 
 const requestAborts = new Map<string, AbortController>();
 
-ipcMain.handle("grpc:send-request", async (_event, { requestId, ...args }: SendRequestArgs & { requestId: string }) => {
+ipcMain.handle("grpc:send-request", async (event, { requestId, ...args }: SendRequestArgs & { requestId: string }) => {
   const abort = new AbortController();
   requestAborts.set(requestId, abort);
   try {
-    return await sendRequest(args, abort.signal);
+    return await sendRequest(args, abort.signal, (data) => {
+      event.sender.send("grpc:stream-data", { requestId, data });
+    });
   } finally {
     requestAborts.delete(requestId);
   }

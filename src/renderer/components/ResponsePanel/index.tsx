@@ -25,17 +25,17 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
-function ResponseHeader({ copyText }: { copyText?: string }) {
+function ResponseHeader({ copyText, streaming }: { copyText?: string; streaming?: boolean }) {
   return (
     <div className="response-label">
-      <span>Response</span>
+      <span>{streaming ? "Streaming…" : "Response"}</span>
       {copyText && <CopyButton text={copyText} />}
     </div>
   );
 }
 
 export default function ResponsePanel({ response, error, loading }: Props) {
-  if (loading) {
+  if (loading && (response === null || response === undefined)) {
     return (
       <div className="response-panel">
         <ResponseHeader />
@@ -61,7 +61,7 @@ export default function ResponsePanel({ response, error, loading }: Props) {
     const text = JSON.stringify(response, null, 2);
     return (
       <div className="response-panel">
-        <ResponseHeader copyText={text} />
+        <ResponseHeader copyText={loading ? undefined : text} streaming={loading} />
         <div className="response-editor">
           <Editor
             language="json"

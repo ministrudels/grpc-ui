@@ -68,6 +68,7 @@ export interface SendRequestArgs {
   requestJson: string;
   fileDescriptors: string[];
   metadata?: Array<{ key: string; value: string }>;
+  serverStreaming?: boolean;
 }
 
 // ── Reflection client constructors ───────────────────────────────────────────
@@ -348,7 +349,11 @@ export async function discoverServices(
 
 // ── sendRequest ───────────────────────────────────────────────────────────────
 
-export async function sendRequest(args: SendRequestArgs, signal?: AbortSignal): Promise<unknown> {
+export async function sendRequest(
+  args: SendRequestArgs,
+  signal?: AbortSignal,
+  onData?: (data: unknown) => void
+): Promise<unknown> {
   const { url, serviceName, methodName, requestType, responseType, requestJson, fileDescriptors, metadata } = args;
 
   // Re-encode individual FileDescriptorProtos into a FileDescriptorSet binary so
@@ -408,28 +413,61 @@ export async function sendRequest(args: SendRequestArgs, signal?: AbortSignal): 
   }
 
   const client = new grpc.Client(url, grpc.credentials.createInsecure());
+  const deadline = new Date(Date.now() + 30_000);
+  let closed = false;
+  function closeOnce() {
+    if (!closed) { closed = true; client.close(); }
+  }
+
+  const grpcMetadata = new grpc.Metadata();
+  for (const { key, value } of metadata ?? []) {
+    if (key.trim()) grpcMetadata.add(key.trim(), value);
+  }
+
+  function deserialize(buf: Buffer): unknown {
+    try {
+      return ResponseType.toObject(ResponseType.decode(buf), { defaults: true, arrays: true });
+    } catch (e) {
+      throw new Error(`[decode] Failed to decode response: ${(e as Error).message}`);
+    }
+  }
+
+  if (args.serverStreaming) {
+    return new Promise((resolve, reject) => {
+      const results: unknown[] = [];
+      const call = client.makeServerStreamRequest(
+        `/${serviceName}/${methodName}`,
+        (req: Buffer) => req,
+        deserialize as (buf: Buffer) => unknown,
+        requestBytes,
+        grpcMetadata,
+        { deadline }
+      );
+      signal?.addEventListener("abort", () => {
+        call.cancel();
+        closeOnce();
+        reject(new Error("Cancelled"));
+      }, { once: true });
+      call.on("data", (data: unknown) => {
+        results.push(data);
+        onData?.(data);
+      });
+      call.on("end", () => {
+        closeOnce();
+        resolve(results);
+      });
+      call.on("error", (err: Error) => {
+        closeOnce();
+        reject(err);
+      });
+    });
+  }
+
   return new Promise((resolve, reject) => {
-    const deadline = new Date(Date.now() + 30_000);
-    let closed = false;
-    function closeOnce() {
-      if (!closed) { closed = true; client.close(); }
-    }
-
-    const grpcMetadata = new grpc.Metadata();
-    for (const { key, value } of metadata ?? []) {
-      if (key.trim()) grpcMetadata.add(key.trim(), value);
-    }
-
     const call = client.makeUnaryRequest(
       `/${serviceName}/${methodName}`,
       (req: Buffer) => req,
-      (buf: Buffer) => {
-        try {
-          return ResponseType.toObject(ResponseType.decode(buf), { defaults: true, arrays: true });
-        } catch (e) {
-          throw new Error(`[decode] Failed to decode response: ${(e as Error).message}`);
-        }
-      },
+      deserialize as (buf: Buffer) => unknown,
       requestBytes,
       grpcMetadata,
       { deadline },
