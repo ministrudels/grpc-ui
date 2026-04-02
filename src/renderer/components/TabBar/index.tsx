@@ -1,4 +1,4 @@
-import type { Tab } from "../../App";
+import type { Tab, TabStatus } from "../../App";
 import "./styles.css";
 
 interface Props {
@@ -6,6 +6,11 @@ interface Props {
   activeTabId: string | null;
   onSelect: (id: string) => void;
   onClose: (id: string) => void;
+}
+
+function StatusDot({ status }: { status: TabStatus }) {
+  if (status === "idle") return null;
+  return <span className={`tabbar-status tabbar-status-${status}`} />;
 }
 
 export default function TabBar({ tabs, activeTabId, onSelect, onClose }: Props) {
@@ -19,6 +24,7 @@ export default function TabBar({ tabs, activeTabId, onSelect, onClose }: Props) 
           className={`tabbar-tab${tab.id === activeTabId ? " active" : ""}`}
           onClick={() => onSelect(tab.id)}
         >
+          <StatusDot status={tab.status} />
           <span className="tabbar-tab-name">{tab.method.name}</span>
           <button
             className="tabbar-tab-close"
