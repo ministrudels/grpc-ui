@@ -1,5 +1,4 @@
 import Editor from "@monaco-editor/react";
-import { useState } from "react";
 import "./styles.css";
 
 interface Props {
@@ -8,28 +7,16 @@ interface Props {
   loading: boolean;
 }
 
-function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
-
-  function handleCopy() {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    });
-  }
-
-  return (
-    <button className={`copy-btn${copied ? " copied" : ""}`} onClick={handleCopy}>
-      {copied ? "Copied!" : "Copy"}
-    </button>
-  );
+export function responseCopyText(response: unknown, error: string | null): string | null {
+  if (error) return error;
+  if (response !== null && response !== undefined) return JSON.stringify(response, null, 2);
+  return null;
 }
 
 export default function ResponsePanel({ response, error, loading }: Props) {
   if (loading) {
     return (
       <div className="response-panel">
-        <div className="response-label">Response</div>
         <div className="response-body">
           <span className="response-loading">Sending…</span>
         </div>
@@ -40,9 +27,6 @@ export default function ResponsePanel({ response, error, loading }: Props) {
   if (error) {
     return (
       <div className="response-panel">
-        <div className="response-label">
-          Response <CopyButton text={error} />
-        </div>
         <div className="response-body">
           <span className="response-error">{error}</span>
         </div>
@@ -51,17 +35,13 @@ export default function ResponsePanel({ response, error, loading }: Props) {
   }
 
   if (response !== null && response !== undefined) {
-    const text = JSON.stringify(response, null, 2);
     return (
       <div className="response-panel">
-        <div className="response-label">
-          Response <CopyButton text={text} />
-        </div>
         <div className="response-editor">
           <Editor
             language="json"
             theme="vs-dark"
-            value={text}
+            value={JSON.stringify(response, null, 2)}
             options={{
               readOnly: true,
               minimap: { enabled: false },
@@ -83,9 +63,5 @@ export default function ResponsePanel({ response, error, loading }: Props) {
     );
   }
 
-  return (
-    <div className="response-panel">
-      <div className="response-label">Response</div>
-    </div>
-  );
+  return <div className="response-panel" />;
 }

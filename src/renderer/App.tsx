@@ -4,7 +4,7 @@ import TabBar from "./components/TabBar";
 import AddressBar from "./components/AddressBar";
 import RequestBody from "./components/RequestBody";
 import MetadataEditor, { type MetadataRow } from "./components/MetadataEditor";
-import ResponsePanel from "./components/ResponsePanel";
+import ResponsePanel, { responseCopyText } from "./components/ResponsePanel";
 import Snackbar from "./components/Snackbar";
 import type { GrpcMethod, GrpcService, NamedCollection } from "./global";
 import { skeletonFromMessage } from "./proto";
@@ -12,6 +12,24 @@ import type { OnSelectMethod } from "./components/Sidebar";
 import "./app.css";
 
 export type { NamedCollection };
+
+function CopyButton({ text }: { text: string | null }) {
+  const [copied, setCopied] = useState(false);
+  if (!text) return null;
+  return (
+    <button
+      className={`copy-btn${copied ? " copied" : ""}`}
+      onClick={() => {
+        navigator.clipboard.writeText(text).then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        });
+      }}
+    >
+      {copied ? "Copied!" : "Copy"}
+    </button>
+  );
+}
 
 export type TabStatus = "idle" | "sending" | "success" | "error";
 
@@ -284,6 +302,10 @@ export default function App() {
                       </span>
                     )}
                   </button>
+                  <span className="editor-tab-response-label">
+                    Response
+                    <CopyButton text={responseCopyText(activeTab.response, activeTab.responseError)} />
+                  </span>
                 </div>
                 {activeTab.editorTab === "request" ? (
                   <RequestBody
