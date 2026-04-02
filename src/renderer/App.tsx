@@ -24,6 +24,7 @@ export type Tab = {
   metadata: MetadataRow[];
   editorTab: "request" | "metadata";
   response: unknown;
+  streamTimestamps: number[];
   responseError: string | null;
   sending: boolean;
   elapsed: number;
@@ -62,6 +63,12 @@ export default function App() {
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [snackbar, setSnackbar] = useState<{ message: string; visible: boolean }>({ message: "", visible: false });
   const snackbarTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Always holds the latest values so the single keydown listener never reads stale closure state
+  const latestRef = useRef<{ activeTab: Tab | null; handleSend: () => void; showSnackbar: (m: string) => void }>({
+    activeTab: null,
+    handleSend: () => {},
+    showSnackbar: () => {},
+  });
 
   const activeTab = tabs.find((t) => t.id === activeTabId) ?? null;
 
@@ -99,24 +106,31 @@ export default function App() {
     setCollections(next);
   }
 
+  // Keep ref in sync so the keydown listener always reads current state
+  latestRef.current.activeTab = activeTab;
+  latestRef.current.handleSend = handleSend;
+  latestRef.current.showSnackbar = showSnackbar;
+
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape" && activeTab?.sending) {
-        window.grpcui.cancelRequest(activeTab.id);
+      const { activeTab: tab, handleSend: send, showSnackbar: snack } = latestRef.current;
+      if (e.key === "Escape" && tab?.sending) {
+        window.grpcui.cancelRequest(tab.id);
         return;
       }
       if (!(e.key === "Enter" && e.metaKey)) return;
-      if (!activeTab) {
-        showSnackbar("Select a method before sending");
-      } else if (activeTab.sending) {
-        showSnackbar("A request is already in flight");
+      if (!tab) {
+        snack("Select a method before sending");
+      } else if (tab.sending) {
+        snack("A request is already in flight");
       } else {
-        handleSend();
+        send();
       }
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSelectMethod: OnSelectMethod = (collectionUrl, service, method, messages) => {
     const existing = tabs.find(
@@ -136,6 +150,7 @@ export default function App() {
       metadata: [],
       editorTab: "request",
       response: null,
+      streamTimestamps: [],
       responseError: null,
       sending: false,
       elapsed: 0,
@@ -166,17 +181,18 @@ export default function App() {
       return;
     }
     const isStreaming = activeTab.method.serverStreaming;
-    updateTab(tabId, { sending: true, response: null, responseError: null, status: "sending" });
+    updateTab(tabId, { sending: true, response: null, streamTimestamps: [], responseError: null, status: "sending" });
 
     let unsubscribe: (() => void) | null = null;
     if (isStreaming) {
       unsubscribe = window.grpcui.onStreamData(({ requestId, data }) => {
         if (requestId !== tabId) return;
+        const ts = Date.now();
         setTabs((prev) =>
           prev.map((t) => {
             if (t.id !== tabId) return t;
             const existing = Array.isArray(t.response) ? (t.response as unknown[]) : [];
-            return { ...t, response: [...existing, data] };
+            return { ...t, response: [...existing, data], streamTimestamps: [...t.streamTimestamps, ts] };
           })
         );
       });
@@ -271,6 +287,7 @@ export default function App() {
               </div>
               <ResponsePanel
                 response={activeTab.response}
+                streamTimestamps={activeTab.streamTimestamps}
                 error={activeTab.responseError}
                 loading={activeTab.sending}
               />

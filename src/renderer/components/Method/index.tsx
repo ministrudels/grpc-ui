@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import type { GrpcMethod } from "../../global";
 import type { TabStatus } from "../../App";
 import "./styles.css";
@@ -18,8 +19,15 @@ function methodBadge(method: GrpcMethod): { label: string; className: string } {
 
 export default function Method({ method, active, tabStatus, onClick }: Props) {
   const badge = methodBadge(method);
+  const ref = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (active) ref.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [active]);
+
   return (
     <div
+      ref={ref}
       className={`method${active ? " active" : ""}`}
       onClick={onClick}
     >

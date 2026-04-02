@@ -52,6 +52,35 @@
 }
 .response-loading { color: #3b82f6; }
 .response-error   { color: #ef4444; }
+.response-stream {
+  flex: 1;
+  overflow-y: auto;
+  border-left: 1px solid #2d2d2d;
+  padding: 8px 0;
+}
+.stream-message {
+  padding: 6px 12px;
+  border-bottom: 1px solid #1f1f1f;
+}
+.stream-message:last-child {
+  border-bottom: none;
+}
+.stream-ts {
+  display: block;
+  color: #4a4a4a;
+  font-family: monospace;
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+.stream-json {
+  margin: 0;
+  font-family: monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #e2e2e2;
+}
 .response-editor {
   flex: 1;
   overflow: hidden;

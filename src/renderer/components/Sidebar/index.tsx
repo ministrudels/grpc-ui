@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import AddCollectionDialog from "../AddCollectionDialog";
 import Collection from "../Collection";
 import type { GrpcMessage, GrpcMethod, GrpcService, ReflectProgress } from "../../global";
@@ -35,12 +35,26 @@ export default function Sidebar({ collections, onCollectionsChange, selectedMeth
   const [resyncErrors, setResyncErrors] = useState<Record<string, string>>({});
   const [progress, setProgress] = useState<ReflectProgress | null>(null);
   const [query, setQuery] = useState("");
+  const searchRef = useRef<HTMLInputElement | null>(null);
 
   const busy = loading || resyncing > 0;
 
   useEffect(() => {
     const cleanup = window.grpcui.onReflectProgress((p) => setProgress(p));
     return cleanup;
+  }, []);
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key !== "/" && !(e.key === "k" && e.metaKey)) return;
+      const target = e.target as HTMLElement;
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) return;
+      e.preventDefault();
+      searchRef.current?.focus();
+      searchRef.current?.select();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
   function handleDelete(url: string) {
@@ -107,10 +121,12 @@ export default function Sidebar({ collections, onCollectionsChange, selectedMeth
       )}
       <div className="sidebar-toolbar">
         <input
+          ref={searchRef}
           className="sidebar-search"
           placeholder="Search methods…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Escape") { setQuery(""); e.currentTarget.blur(); } }}
           spellCheck={false}
         />
         <button className="sidebar-add-btn" onClick={() => setDialogOpen(true)} disabled={busy} title="Add collection">
