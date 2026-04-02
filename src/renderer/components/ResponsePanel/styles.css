@@ -62,6 +62,10 @@
   padding: 6px 12px;
   border-bottom: 1px solid #1f1f1f;
 }
+.stream-message-error {
+  border-top: 1px solid #1f1f1f;
+  border-bottom: none;
+}
 .stream-message:last-child {
   border-bottom: none;
 }

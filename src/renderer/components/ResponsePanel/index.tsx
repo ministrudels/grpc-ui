@@ -71,11 +71,13 @@ function ResponseEditor({
   streaming,
   messages,
   timestamps,
+  terminalError,
 }: {
   text: string;
   streaming: boolean;
   messages: unknown[];
   timestamps: number[];
+  terminalError?: string | null;
 }) {
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const streamRef = useRef<HTMLDivElement | null>(null);
@@ -92,11 +94,16 @@ function ResponseEditor({
   return (
     <div className="response-panel">
       <ResponseHeader copyText={streaming ? undefined : text} streaming={streaming} />
-      {streaming ? (
+      {streaming || terminalError ? (
         <div className="response-stream" ref={streamRef}>
           {messages.map((msg, i) => (
             <StreamMessage key={i} msg={msg} ts={timestamps[i]} />
           ))}
+          {terminalError && (
+            <div className="stream-message stream-message-error">
+              <span className="response-error">{terminalError}</span>
+            </div>
+          )}
         </div>
       ) : (
         <div className="response-editor">
@@ -139,6 +146,21 @@ export default function ResponsePanel({ response, streamTimestamps, error, loadi
     );
   }
 
+  if (response !== null && response !== undefined) {
+    const isStream = Array.isArray(response);
+    const messages = isStream ? response : [response];
+    const text = JSON.stringify(response, null, 2);
+    return (
+      <ResponseEditor
+        text={text}
+        streaming={loading}
+        messages={messages}
+        timestamps={streamTimestamps}
+        terminalError={isStream ? error : null}
+      />
+    );
+  }
+
   if (error) {
     return (
       <div className="response-panel">
@@ -148,12 +170,6 @@ export default function ResponsePanel({ response, streamTimestamps, error, loadi
         </div>
       </div>
     );
-  }
-
-  if (response !== null && response !== undefined) {
-    const messages = Array.isArray(response) ? response : [response];
-    const text = JSON.stringify(response, null, 2);
-    return <ResponseEditor text={text} streaming={loading} messages={messages} timestamps={streamTimestamps} />;
   }
 
   return (
