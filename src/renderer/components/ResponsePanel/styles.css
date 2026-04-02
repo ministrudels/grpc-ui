@@ -5,14 +5,39 @@
   min-width: 0;
   min-height: 0;
 }
+/* Height must match .editor-tabs so the border lines up seamlessly */
 .response-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  padding: 6px 12px 4px;
+  padding: 6px 12px;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
+}
+.copy-btn {
+  margin-left: auto;
+  background: none;
+  border: 1px solid var(--bg-element-hover);
+  border-radius: 3px;
+  color: var(--text-secondary);
+  font-size: 10px;
+  padding: 1px 7px;
+  cursor: pointer;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  transition: color 0.1s, border-color 0.1s;
+}
+.copy-btn:hover {
+  color: var(--text-service);
+  border-color: var(--border-raised);
+}
+.copy-btn.copied {
+  color: var(--status-success);
+  border-color: var(--status-success);
 }
 .response-body {
   flex: 1;
@@ -23,13 +48,42 @@
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
+  border-left: 1px solid var(--border);
 }
-.response-pending { color: var(--text-placeholder); }
-.response-loading  { color: var(--text-secondary); }
-.response-error    { color: var(--accent-red); }
-.response-success  { color: var(--accent-green); }
+.response-loading { color: var(--status-sending); }
+.response-error   { color: var(--status-error); }
+.response-stream {
+  flex: 1;
+  overflow-y: auto;
+  border-left: 1px solid var(--border);
+  padding: 8px 0;
+}
+.stream-message {
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--stream-msg-border);
+}
+.stream-message:last-child {
+  border-bottom: none;
+}
+.stream-ts {
+  display: block;
+  color: var(--text-placeholder);
+  font-family: monospace;
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+.stream-json {
+  margin: 0;
+  font-family: monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--text-primary);
+}
 .response-editor {
   flex: 1;
   overflow: hidden;
   min-height: 0;
+  border-left: 1px solid var(--border);
 }

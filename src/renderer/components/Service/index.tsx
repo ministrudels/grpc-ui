@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Method from "../Method";
 import type { GrpcMessage, GrpcService } from "../../global";
-import type { SelectedMethod } from "../../App";
+import type { SelectedMethod, TabStatus } from "../../App";
 import type { OnSelectMethod } from "../Sidebar";
 import "./styles.css";
 
@@ -12,6 +12,7 @@ interface Props {
   selectedMethod: SelectedMethod | null;
   onSelectMethod: OnSelectMethod;
   query?: string;
+  tabStatuses?: Map<string, TabStatus>;
 }
 
 function fuzzyMatch(query: string, target: string): boolean {
@@ -30,7 +31,7 @@ function fuzzyMatch(query: string, target: string): boolean {
  * up via onSelectMethod, forwarding the message definitions needed to build
  * a skeleton request body.
  */
-export default function Service({ service, collectionUrl, messages, selectedMethod, onSelectMethod, query = "" }: Props) {
+export default function Service({ service, collectionUrl, messages, selectedMethod, onSelectMethod, query = "", tabStatuses }: Props) {
   const [open, setOpen] = useState(true);
 
   const visibleMethods = query
@@ -55,6 +56,7 @@ export default function Service({ service, collectionUrl, messages, selectedMeth
             selectedMethod?.service.name === service.name &&
             selectedMethod?.method.name === method.name
           }
+          tabStatus={tabStatuses?.get(`${collectionUrl}|${service.name}|${method.name}`) ?? null}
           onClick={() => onSelectMethod(collectionUrl, service, method, messages)}
         />
       ))}

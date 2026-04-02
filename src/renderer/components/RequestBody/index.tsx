@@ -45,7 +45,6 @@ export default function RequestBody({ value, onChange, onSend, requestType, mess
 
   return (
     <div className="request-body">
-      <div className="request-label">Request</div>
       <div className="request-editor">
         <Editor
           path="request.json"

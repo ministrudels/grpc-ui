@@ -1,10 +1,16 @@
 import { test as base, _electron as electron, ElectronApplication, Page } from "@playwright/test";
+import * as grpc from "@grpc/grpc-js";
+import * as protoLoader from "@grpc/proto-loader";
+import { ReflectionService } from "@grpc/reflection";
 import path from "path";
 
 export type Fixtures = {
   app: ElectronApplication;
   window: Page;
+  grpcServer: { port: number };
 };
+
+const GREETER_PROTO = path.join(__dirname, "../src/__tests__/fixtures/greeter.proto");
 
 export const test = base.extend<Fixtures>({
   app: async ({}, use) => {
@@ -19,7 +25,43 @@ export const test = base.extend<Fixtures>({
     const window = await app.firstWindow();
     await window.waitForLoadState("domcontentloaded");
     await use(window);
-  }
+  },
+  grpcServer: async ({}, use) => {
+    const packageDef = protoLoader.loadSync(GREETER_PROTO, {
+      keepCase: false,
+      longs: String,
+      enums: String,
+      defaults: true,
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pkg = grpc.loadPackageDefinition(packageDef) as any;
+    const server = new grpc.Server();
+
+    server.addService(pkg.helloworld.Greeter.service, {
+      sayHello: (_call: grpc.ServerUnaryCall<unknown, unknown>, callback: grpc.sendUnaryData<unknown>) => {
+        callback(null, { message: "Hello from test server" });
+      },
+      sayHelloStream: (call: grpc.ServerWritableStream<unknown, unknown>) => {
+        call.write({ message: "stream message 1" });
+        call.write({ message: "stream message 2" });
+        call.write({ message: "stream message 3" });
+        call.end();
+      },
+    });
+
+    const reflection = new ReflectionService(packageDef);
+    reflection.addToServer(server);
+
+    const port = await new Promise<number>((resolve, reject) => {
+      server.bindAsync("0.0.0.0:0", grpc.ServerCredentials.createInsecure(), (err, p) =>
+        err ? reject(err) : resolve(p)
+      );
+    });
+
+    await use({ port });
+
+    server.forceShutdown();
+  },
 });
 
 export { expect } from "@playwright/test";

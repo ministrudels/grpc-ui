@@ -1,19 +1,9 @@
 .request-body {
   flex: 1;
-  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-}
-.request-label {
-  color: var(--text-secondary);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 6px 12px 4px;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
 }
 .request-editor {
   flex: 1;

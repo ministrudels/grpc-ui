@@ -1,0 +1,76 @@
+.tabbar {
+  display: flex;
+  align-items: stretch;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  flex-shrink: 0;
+  scrollbar-width: none;
+}
+.tabbar::-webkit-scrollbar {
+  display: none;
+}
+.tabbar-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px 0 12px;
+  height: 34px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  border-right: 1px solid var(--border);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  user-select: none;
+}
+.tabbar-tab:hover {
+  background: var(--bg-base);
+  color: var(--text-service);
+}
+.tabbar-tab.active {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--accent-blue);
+}
+.tabbar-tab-name {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tabbar-tab-close {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 1px;
+  cursor: pointer;
+  opacity: 0.4;
+  flex-shrink: 0;
+}
+.tabbar-tab:hover .tabbar-tab-close,
+.tabbar-tab.active .tabbar-tab-close {
+  opacity: 0.7;
+}
+.tabbar-tab-close:hover {
+  opacity: 1 !important;
+}
+
+/* Status indicators */
+.tabbar-status {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.tabbar-status-success { background: var(--status-success); }
+.tabbar-status-error   { background: var(--status-error); }
+.tabbar-status-sending {
+  background: var(--status-sending);
+  animation: tabbar-pulse 1s ease-in-out infinite;
+}
+@keyframes tabbar-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}

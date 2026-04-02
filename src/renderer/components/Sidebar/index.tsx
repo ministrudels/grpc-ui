@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import AddCollectionDialog from "../AddCollectionDialog";
 import Collection from "../Collection";
 import type { GrpcMessage, GrpcMethod, GrpcService, ReflectProgress } from "../../global";
 import type { NamedCollection } from "../../global";
-import type { SelectedMethod } from "../../App";
+import type { SelectedMethod, TabStatus } from "../../App";
 import "./styles.css";
 
 export type OnSelectMethod = (
@@ -18,6 +18,7 @@ interface Props {
   onCollectionsChange: (next: NamedCollection[]) => void;
   selectedMethod: SelectedMethod | null;
   onSelectMethod: OnSelectMethod;
+  tabStatuses: Map<string, TabStatus>;
   onOpenSettings: () => void;
 }
 
@@ -27,7 +28,7 @@ interface Props {
  * reflection, and notifies the parent of collection changes so they are
  * persisted to localStorage. Renders a Collection tree for each saved server.
  */
-export default function Sidebar({ collections, onCollectionsChange, selectedMethod, onSelectMethod, onOpenSettings }: Props) {
+export default function Sidebar({ collections, onCollectionsChange, selectedMethod, onSelectMethod, tabStatuses, onOpenSettings }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [resyncing, setResyncing] = useState(0);
@@ -35,12 +36,26 @@ export default function Sidebar({ collections, onCollectionsChange, selectedMeth
   const [resyncErrors, setResyncErrors] = useState<Record<string, string>>({});
   const [progress, setProgress] = useState<ReflectProgress | null>(null);
   const [query, setQuery] = useState("");
+  const searchRef = useRef<HTMLInputElement | null>(null);
 
   const busy = loading || resyncing > 0;
 
   useEffect(() => {
     const cleanup = window.grpcui.onReflectProgress((p) => setProgress(p));
     return cleanup;
+  }, []);
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key !== "/" && !(e.key === "k" && e.metaKey)) return;
+      const target = e.target as HTMLElement;
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) return;
+      e.preventDefault();
+      searchRef.current?.focus();
+      searchRef.current?.select();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
   function handleDelete(url: string) {
@@ -107,10 +122,12 @@ export default function Sidebar({ collections, onCollectionsChange, selectedMeth
       )}
       <div className="sidebar-toolbar">
         <input
+          ref={searchRef}
           className="sidebar-search"
           placeholder="Search methods…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Escape") { setQuery(""); e.currentTarget.blur(); } }}
           spellCheck={false}
         />
         <button className="sidebar-add-btn" onClick={onOpenSettings} title="Settings (⌘/Ctrl+,)">
@@ -121,20 +138,23 @@ export default function Sidebar({ collections, onCollectionsChange, selectedMeth
         </button>
       </div>
 
-      {connectError && <span className="sidebar-error">{connectError}</span>}
+      <div className="sidebar-collections">
+        {connectError && <span className="sidebar-error">{connectError}</span>}
 
-      {collections.map((col) => (
-        <Collection
-          key={col.url}
-          collection={col}
-          selectedMethod={selectedMethod}
-          onSelectMethod={onSelectMethod}
-          onResync={handleResync}
-          onDelete={handleDelete}
-          error={resyncErrors[col.url]}
-          query={query}
-        />
-      ))}
+        {collections.map((col) => (
+          <Collection
+            key={col.url}
+            collection={col}
+            selectedMethod={selectedMethod}
+            onSelectMethod={onSelectMethod}
+            onResync={handleResync}
+            onDelete={handleDelete}
+            error={resyncErrors[col.url]}
+            query={query}
+            tabStatuses={tabStatuses}
+          />
+        ))}
+      </div>
 
       {dialogOpen && <AddCollectionDialog onClose={() => setDialogOpen(false)} onConfirm={handleConfirm} />}
     </div>

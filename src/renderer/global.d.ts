@@ -46,6 +46,8 @@ export interface SendRequestArgs {
   responseType: string;
   requestJson: string;
   fileDescriptors: string[];
+  metadata?: Array<{ key: string; value: string }>;
+  serverStreaming?: boolean;
 }
 
 export type ReflectProgress =
@@ -56,9 +58,10 @@ declare global {
   interface Window {
     grpcui: {
       connectServer: (url: string) => Promise<Collection>;
-      sendRequest: (args: SendRequestArgs) => Promise<unknown>;
-      cancelRequest: () => void;
+      sendRequest: (args: SendRequestArgs, requestId: string) => Promise<unknown>;
+      cancelRequest: (requestId: string) => void;
       onReflectProgress: (cb: (progress: ReflectProgress) => void) => () => void;
+      onStreamData: (cb: (payload: { requestId: string; data: unknown }) => void) => () => void;
     };
   }
 }

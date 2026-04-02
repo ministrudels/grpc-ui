@@ -1,6 +1,6 @@
 import { app, BrowserWindow, ipcMain } from "electron";
 import path from "path";
-import { discoverServices, sendRequest } from "./grpc-client";
+import { discoverServices, sendRequest, type SendRequestArgs } from "./grpc-client";
 
 function createWindow(): void {
   const win = new BrowserWindow({
@@ -26,19 +26,23 @@ ipcMain.handle("grpc:connect-server", async (event, url: string) => {
   });
 });
 
-let currentRequestAbort: AbortController | null = null;
+const requestAborts = new Map<string, AbortController>();
 
-ipcMain.handle("grpc:send-request", async (_event, args) => {
-  currentRequestAbort = new AbortController();
+ipcMain.handle("grpc:send-request", async (event, { requestId, ...args }: SendRequestArgs & { requestId: string }) => {
+  const abort = new AbortController();
+  requestAborts.set(requestId, abort);
   try {
-    return await sendRequest(args, currentRequestAbort.signal);
+    return await sendRequest(args, abort.signal, (data) => {
+      event.sender.send("grpc:stream-data", { requestId, data });
+    });
   } finally {
-    currentRequestAbort = null;
+    requestAborts.delete(requestId);
   }
 });
 
-ipcMain.on("grpc:cancel-request", () => {
-  currentRequestAbort?.abort();
+ipcMain.on("grpc:cancel-request", (_event, requestId: string) => {
+  requestAborts.get(requestId)?.abort();
+  requestAborts.delete(requestId);
 });
 
 app.whenReady().then(createWindow);
