@@ -30,7 +30,7 @@ export default function AddressBar({ url, canSend, sending, elapsed, onSend, onC
         ) : (
           <button className="send-btn" disabled={!canSend} onClick={onSend}>Send</button>
         )}
-        {sending && <span className="address-timer">{formatElapsed(elapsed)}</span>}
+        <span className="address-timer">{sending ? formatElapsed(elapsed) : "\u00a0"}</span>
       </div>
     </div>
   );
