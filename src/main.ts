@@ -1,6 +1,40 @@
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, ipcMain, Menu } from "electron";
 import path from "path";
 import { discoverServices, sendRequest, type SendRequestArgs } from "./grpc-client";
+
+function openSettings(): void {
+  BrowserWindow.getFocusedWindow()?.webContents.send("grpc:open-settings");
+}
+
+function buildMenu(): void {
+  const template: Electron.MenuItemConstructorOptions[] = [
+    {
+      // On macOS this label is replaced by the app name automatically
+      label: app.name,
+      submenu: [
+        { role: "about" },
+        { type: "separator" },
+        {
+          label: "Settings…",
+          accelerator: "CmdOrCtrl+,",
+          click: openSettings,
+        },
+        { type: "separator" },
+        { role: "services" },
+        { type: "separator" },
+        { role: "hide" },
+        { role: "hideOthers" },
+        { role: "unhide" },
+        { type: "separator" },
+        { role: "quit" },
+      ],
+    },
+    { role: "editMenu" as const },
+    { role: "viewMenu" as const },
+    { role: "windowMenu" as const },
+  ];
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
 
 function createWindow(): void {
   const win = new BrowserWindow({
@@ -45,7 +79,10 @@ ipcMain.on("grpc:cancel-request", (_event, requestId: string) => {
   requestAborts.delete(requestId);
 });
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  buildMenu();
+  createWindow();
+});
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();

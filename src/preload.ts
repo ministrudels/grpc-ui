@@ -17,4 +17,9 @@ contextBridge.exposeInMainWorld("grpcui", {
     ipcRenderer.on("grpc:stream-data", listener as Parameters<typeof ipcRenderer.on>[1]);
     return () => ipcRenderer.removeListener("grpc:stream-data", listener as Parameters<typeof ipcRenderer.removeListener>[1]);
   },
+  onOpenSettings: (cb: () => void) => {
+    const listener = () => cb();
+    ipcRenderer.on("grpc:open-settings", listener as Parameters<typeof ipcRenderer.on>[1]);
+    return () => ipcRenderer.removeListener("grpc:open-settings", listener as Parameters<typeof ipcRenderer.removeListener>[1]);
+  },
 });

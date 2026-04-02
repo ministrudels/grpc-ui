@@ -109,6 +109,10 @@ export default function App() {
     document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
 
+  useEffect(() => {
+    return window.grpcui.onOpenSettings(() => setSettingsOpen(true));
+  }, []);
+
   function handleThemeChange(next: Theme) {
     setTheme(next);
     saveTheme(next);
@@ -296,7 +300,6 @@ export default function App() {
         selectedMethod={selectedMethod}
         onSelectMethod={handleSelectMethod}
         tabStatuses={new Map(tabs.map((t) => [`${t.collectionUrl}|${t.service.name}|${t.method.name}`, t.status]))}
-        onOpenSettings={() => setSettingsOpen(true)}
       />
       <div className="app-main">
         <TabBar tabs={tabs} activeTabId={activeTabId} onSelect={setActiveTabId} onClose={handleCloseTab} />
