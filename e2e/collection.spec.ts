@@ -65,6 +65,18 @@ test.describe("happy path", () => {
 
     await expect(window.locator(".response-editor")).toContainText("Hello from test server", { timeout: 10_000 });
   });
+
+  test("server-streaming method returns all messages as array", async ({ window, grpcServer }) => {
+    await addCollection(window, "Greeter", `localhost:${grpcServer.port}`);
+
+    await window.locator(".method").filter({ hasText: "SayHelloStream" }).first().click();
+    await window.locator(".send-btn").click();
+
+    // Response panel should show the Monaco editor with the full array
+    await expect(window.locator(".response-editor")).toBeVisible({ timeout: 10_000 });
+    await expect(window.locator(".response-editor")).toContainText("stream message 1", { timeout: 10_000 });
+    await expect(window.locator(".response-editor")).toContainText("stream message 3");
+  });
 });
 
 test.describe("sync button", () => {

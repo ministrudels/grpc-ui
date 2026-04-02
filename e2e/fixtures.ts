@@ -41,6 +41,12 @@ export const test = base.extend<Fixtures>({
       sayHello: (_call: grpc.ServerUnaryCall<unknown, unknown>, callback: grpc.sendUnaryData<unknown>) => {
         callback(null, { message: "Hello from test server" });
       },
+      sayHelloStream: (call: grpc.ServerWritableStream<unknown, unknown>) => {
+        call.write({ message: "stream message 1" });
+        call.write({ message: "stream message 2" });
+        call.write({ message: "stream message 3" });
+        call.end();
+      },
     });
 
     const reflection = new ReflectionService(packageDef);
