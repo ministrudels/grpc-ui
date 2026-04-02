@@ -1,4 +1,4 @@
-import Editor, { type OnMount } from "@monaco-editor/react";
+import Editor, { type OnMount, useMonaco } from "@monaco-editor/react";
 import { useEffect, useRef, useState } from "react";
 import type * as monaco from "monaco-editor";
 import "./styles.css";
@@ -45,6 +45,27 @@ function formatTs(ts: number): string {
   return `${hh}:${mm}:${ss}.${ms}`;
 }
 
+function StreamMessage({ msg, ts }: { msg: unknown; ts?: number }) {
+  const monaco = useMonaco();
+  const [html, setHtml] = useState<string | null>(null);
+  const json = JSON.stringify(msg, null, 2);
+
+  useEffect(() => {
+    if (!monaco) return;
+    monaco.editor.colorize(json, "json", {}).then(setHtml);
+  }, [monaco, json]);
+
+  return (
+    <div className="stream-message">
+      {ts !== undefined && <span className="stream-ts">{formatTs(ts)}</span>}
+      {html
+        ? <pre className="stream-json" dangerouslySetInnerHTML={{ __html: html }} />
+        : <pre className="stream-json">{json}</pre>
+      }
+    </div>
+  );
+}
+
 function ResponseEditor({
   text,
   streaming,
@@ -59,14 +80,6 @@ function ResponseEditor({
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const streamRef = useRef<HTMLDivElement | null>(null);
 
-  // Auto-scroll Monaco when not streaming (content just loaded)
-  useEffect(() => {
-    if (streaming || !editorRef.current) return;
-    const model = editorRef.current.getModel();
-    if (model) editorRef.current.revealLine(1);
-  }, [streaming]);
-
-  // Auto-scroll stream list as new messages arrive
   useEffect(() => {
     if (!streaming || !streamRef.current) return;
     streamRef.current.scrollTop = streamRef.current.scrollHeight;
@@ -82,10 +95,7 @@ function ResponseEditor({
       {streaming ? (
         <div className="response-stream" ref={streamRef}>
           {messages.map((msg, i) => (
-            <div key={i} className="stream-message">
-              <span className="stream-ts">{timestamps[i] !== undefined ? formatTs(timestamps[i]) : ""}</span>
-              <pre className="stream-json">{JSON.stringify(msg, null, 2)}</pre>
-            </div>
+            <StreamMessage key={i} msg={msg} ts={timestamps[i]} />
           ))}
         </div>
       ) : (
