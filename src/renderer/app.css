@@ -1,8 +1,8 @@
 .app {
   display: flex;
   height: 100vh;
-  background: #1a1a1a;
-  color: #e2e2e2;
+  background: var(--bg-base);
+  color: var(--text-primary);
 }
 .app-main {
   flex: 1;
@@ -34,20 +34,20 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #4a4a4a;
+  color: var(--text-placeholder);
   font-size: 14px;
 }
 
 .editor-tabs {
   display: flex;
   align-items: stretch;
-  border-bottom: 1px solid #2d2d2d;
+  border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
 .editor-tab {
   background: none;
   border: none;
-  color: #686868;
+  color: var(--text-secondary);
   font-size: 12px;
   padding: 6px 14px;
   cursor: pointer;
@@ -56,14 +56,14 @@
   gap: 5px;
 }
 .editor-tab:hover {
-  color: #aaaaaa;
+  color: var(--text-service);
 }
 .editor-tab.active {
-  color: #e2e2e2;
-  box-shadow: inset 0 -2px 0 #89b4fa;
+  color: var(--text-primary);
+  box-shadow: inset 0 -2px 0 var(--accent-blue);
 }
 .editor-tab-badge {
-  background: #3b82f6;
+  background: var(--status-sending);
   color: #fff;
   font-size: 9px;
   font-weight: 600;

@@ -8,6 +8,7 @@ interface Props {
   streamTimestamps: number[];
   error: string | null;
   loading: boolean;
+  monacoTheme: string;
 }
 
 function CopyButton({ text }: { text: string }) {
@@ -66,115 +67,93 @@ function StreamMessage({ msg, ts }: { msg: unknown; ts?: number }) {
   );
 }
 
-function ResponseEditor({
-  text,
-  streaming,
-  messages,
-  timestamps,
-  terminalError,
-}: {
-  text: string;
-  streaming: boolean;
-  messages: unknown[];
-  timestamps: number[];
-  terminalError?: string | null;
-}) {
+export default function ResponsePanel({ response, streamTimestamps, error, loading, monacoTheme }: Props) {
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const streamRef = useRef<HTMLDivElement | null>(null);
 
+  const isStream = Array.isArray(response);
+  const messages = isStream ? (response as unknown[]) : response !== null && response !== undefined ? [response] : [];
+  const text = response !== null && response !== undefined ? JSON.stringify(response, null, 2) : "";
+
   useEffect(() => {
-    if (!streaming || !streamRef.current) return;
+    if (!loading || !streamRef.current) return;
     streamRef.current.scrollTop = streamRef.current.scrollHeight;
-  }, [messages.length, streaming]);
+  }, [messages.length, loading]);
 
   const handleMount: OnMount = (editor) => {
     editorRef.current = editor;
   };
 
-  return (
-    <div className="response-panel">
-      <ResponseHeader copyText={streaming ? undefined : text} streaming={streaming} />
-      {streaming || terminalError ? (
+  const copyText = loading ? undefined : (error ?? (text || undefined));
+  const streaming = loading && isStream;
+
+  function renderContent() {
+    // Sending with no data yet
+    if (loading && response === null) {
+      return <span className="response-loading">Sending…</span>;
+    }
+
+    // Streaming or stream with terminal error
+    if (isStream || (streaming && error)) {
+      return (
         <div className="response-stream" ref={streamRef}>
           {messages.map((msg, i) => (
-            <StreamMessage key={i} msg={msg} ts={timestamps[i]} />
+            <StreamMessage key={i} msg={msg} ts={streamTimestamps[i]} />
           ))}
-          {terminalError && (
+          {!loading && error && (
             <div className="stream-message stream-message-error">
-              <span className="response-error">{terminalError}</span>
+              <span className="response-error">{error}</span>
             </div>
           )}
         </div>
-      ) : (
-        <div className="response-editor">
-          <Editor
-            language="json"
-            theme="vs-dark"
-            value={text}
-            onMount={handleMount}
-            options={{
-              readOnly: true,
-              minimap: { enabled: false },
-              lineNumbers: "off",
-              folding: false,
-              scrollBeyondLastLine: false,
-              wordWrap: "on",
-              fontSize: 13,
-              fontFamily: "monospace",
-              renderLineHighlight: "none",
-              overviewRulerLanes: 0,
-              hideCursorInOverviewRuler: true,
-              scrollbar: { verticalScrollbarSize: 6, horizontalScrollbarSize: 6 },
-              domReadOnly: true
-            }}
-          />
-        </div>
-      )}
-    </div>
-  );
-}
+      );
+    }
 
-export default function ResponsePanel({ response, streamTimestamps, error, loading }: Props) {
-  if (loading && (response === null || response === undefined)) {
-    return (
-      <div className="response-panel">
-        <ResponseHeader />
-        <div className="response-body">
-          <span className="response-loading">Sending…</span>
-        </div>
-      </div>
-    );
+    // Unary error
+    if (error) {
+      return <span className="response-error">{error}</span>;
+    }
+
+    // Unary response in Monaco
+    if (response !== null && response !== undefined) {
+      return (
+        <Editor
+          language="json"
+          theme={monacoTheme}
+          value={text}
+          onMount={handleMount}
+          options={{
+            readOnly: true,
+            minimap: { enabled: false },
+            lineNumbers: "off",
+            folding: false,
+            scrollBeyondLastLine: false,
+            wordWrap: "on",
+            fontSize: 13,
+            fontFamily: "monospace",
+            renderLineHighlight: "none",
+            overviewRulerLanes: 0,
+            hideCursorInOverviewRuler: true,
+            scrollbar: { verticalScrollbarSize: 6, horizontalScrollbarSize: 6 },
+            domReadOnly: true
+          }}
+        />
+      );
+    }
+
+    return null;
   }
 
-  if (response !== null && response !== undefined) {
-    const isStream = Array.isArray(response);
-    const messages = isStream ? response : [response];
-    const text = JSON.stringify(response, null, 2);
-    return (
-      <ResponseEditor
-        text={text}
-        streaming={loading}
-        messages={messages}
-        timestamps={streamTimestamps}
-        terminalError={isStream ? error : null}
-      />
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="response-panel">
-        <ResponseHeader copyText={error} />
-        <div className="response-body">
-          <span className="response-error">{error}</span>
-        </div>
-      </div>
-    );
-  }
+  const content = renderContent();
+  // Use plain .response-body for text content, .response-editor for Monaco
+  const isMonaco = !isStream && !error && !loading && response !== null && response !== undefined;
 
   return (
     <div className="response-panel">
-      <ResponseHeader />
+      <ResponseHeader copyText={copyText} streaming={streaming} />
+      <div className={isMonaco ? "response-editor" : "response-body"}>
+        {content}
+      </div>
     </div>
   );
 }

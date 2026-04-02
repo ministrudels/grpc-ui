@@ -1,8 +1,8 @@
 .tabbar {
   display: flex;
   align-items: stretch;
-  background: #141414;
-  border-bottom: 1px solid #2d2d2d;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
   overflow-x: auto;
   flex-shrink: 0;
   scrollbar-width: none;
@@ -17,21 +17,21 @@
   padding: 0 10px 0 12px;
   height: 34px;
   font-size: 12px;
-  color: #686868;
-  border-right: 1px solid #2d2d2d;
+  color: var(--text-secondary);
+  border-right: 1px solid var(--border);
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
   user-select: none;
 }
 .tabbar-tab:hover {
-  background: #1e1e1e;
-  color: #aaaaaa;
+  background: var(--bg-base);
+  color: var(--text-service);
 }
 .tabbar-tab.active {
-  background: #1a1a1a;
-  color: #e2e2e2;
-  border-bottom: 2px solid #89b4fa;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--accent-blue);
 }
 .tabbar-tab-name {
   max-width: 140px;
@@ -64,10 +64,10 @@
   border-radius: 50%;
   flex-shrink: 0;
 }
-.tabbar-status-success { background: #22c55e; }
-.tabbar-status-error   { background: #ef4444; }
+.tabbar-status-success { background: var(--status-success); }
+.tabbar-status-error   { background: var(--status-error); }
 .tabbar-status-sending {
-  background: #3b82f6;
+  background: var(--status-sending);
   animation: tabbar-pulse 1s ease-in-out infinite;
 }
 @keyframes tabbar-pulse {

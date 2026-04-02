@@ -30,7 +30,7 @@ async function addCollection(window: Page, name: string, url: string) {
   await window.reload();
   await window.waitForLoadState("domcontentloaded");
 
-  await window.locator(".sidebar-add-btn").click();
+  await window.locator("button[title='Add collection']").click();
   await window.locator(".dialog-input").nth(0).fill(name);
   await window.locator(".dialog-input").nth(1).fill(url);
   await window.locator(".dialog-confirm").click();
@@ -72,10 +72,10 @@ test.describe("happy path", () => {
     await window.locator(".method").filter({ hasText: "SayHelloStream" }).first().click();
     await window.locator(".send-btn").click();
 
-    // Response panel should show the Monaco editor with the full array
-    await expect(window.locator(".response-editor")).toBeVisible({ timeout: 10_000 });
-    await expect(window.locator(".response-editor")).toContainText("stream message 1", { timeout: 10_000 });
-    await expect(window.locator(".response-editor")).toContainText("stream message 3");
+    // Response panel should show the stream list with all messages
+    await expect(window.locator(".response-stream")).toBeVisible({ timeout: 10_000 });
+    await expect(window.locator(".response-stream")).toContainText("stream message 1", { timeout: 10_000 });
+    await expect(window.locator(".response-stream")).toContainText("stream message 3");
   });
 });
 

@@ -6,12 +6,15 @@ import RequestBody from "./components/RequestBody";
 import MetadataEditor, { type MetadataRow } from "./components/MetadataEditor";
 import ResponsePanel from "./components/ResponsePanel";
 import Snackbar from "./components/Snackbar";
+import Settings from "./components/Settings";
 import type { GrpcMethod, GrpcService, NamedCollection } from "./global";
 import { skeletonFromMessage } from "./proto";
 import type { OnSelectMethod } from "./components/Sidebar";
 import "./app.css";
 
 export type { NamedCollection };
+
+export type Theme = "dark" | "light";
 
 export type TabStatus = "idle" | "sending" | "success" | "error";
 
@@ -39,6 +42,7 @@ export type SelectedMethod = {
 };
 
 const STORAGE_KEY = "grpcui:collections";
+const SETTINGS_KEY = "grpcui:settings";
 
 function loadCollections(): NamedCollection[] {
   try {
@@ -53,6 +57,21 @@ function saveCollections(collections: NamedCollection[]): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(collections));
 }
 
+function loadTheme(): Theme {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (!raw) return "dark";
+    const settings = JSON.parse(raw) as { theme?: string };
+    return settings.theme === "light" ? "light" : "dark";
+  } catch {
+    return "dark";
+  }
+}
+
+function saveTheme(theme: Theme): void {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify({ theme }));
+}
+
 function newTabId(): string {
   return Math.random().toString(36).slice(2, 9);
 }
@@ -63,11 +82,21 @@ export default function App() {
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [snackbar, setSnackbar] = useState<{ message: string; visible: boolean }>({ message: "", visible: false });
   const snackbarTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [theme, setTheme] = useState<Theme>(loadTheme);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   // Always holds the latest values so the single keydown listener never reads stale closure state
-  const latestRef = useRef<{ activeTab: Tab | null; handleSend: () => void; showSnackbar: (m: string) => void }>({
+  const latestRef = useRef<{
+    activeTab: Tab | null;
+    handleSend: () => void;
+    showSnackbar: (m: string) => void;
+    settingsOpen: boolean;
+    setSettingsOpen: (v: boolean) => void;
+  }>({
     activeTab: null,
     handleSend: () => {},
     showSnackbar: () => {},
+    settingsOpen: false,
+    setSettingsOpen: () => {}
   });
 
   const activeTab = tabs.find((t) => t.id === activeTabId) ?? null;
@@ -75,6 +104,15 @@ export default function App() {
   const selectedMethod: SelectedMethod | null = activeTab
     ? { collectionUrl: activeTab.collectionUrl, service: activeTab.service, method: activeTab.method }
     : null;
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
+
+  function handleThemeChange(next: Theme) {
+    setTheme(next);
+    saveTheme(next);
+  }
 
   function updateTab(id: string, patch: Partial<Tab>) {
     setTabs((prev) => prev.map((t) => (t.id === id ? { ...t, ...patch } : t)));
@@ -110,12 +148,32 @@ export default function App() {
   latestRef.current.activeTab = activeTab;
   latestRef.current.handleSend = handleSend;
   latestRef.current.showSnackbar = showSnackbar;
+  latestRef.current.settingsOpen = settingsOpen;
+  latestRef.current.setSettingsOpen = setSettingsOpen;
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      const { activeTab: tab, handleSend: send, showSnackbar: snack } = latestRef.current;
-      if (e.key === "Escape" && tab?.sending) {
-        window.grpcui.cancelRequest(tab.id);
+      const {
+        activeTab: tab,
+        handleSend: send,
+        showSnackbar: snack,
+        settingsOpen: isSettingsOpen,
+        setSettingsOpen: openSettings
+      } = latestRef.current;
+      if (e.key === "," && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        openSettings(true);
+        return;
+      }
+      if (e.key === "Escape") {
+        if (isSettingsOpen) {
+          openSettings(false);
+          return;
+        }
+        if (tab?.sending) {
+          window.grpcui.cancelRequest(tab.id);
+          return;
+        }
         return;
       }
       if (!(e.key === "Enter" && e.metaKey)) return;
@@ -129,7 +187,7 @@ export default function App() {
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSelectMethod: OnSelectMethod = (collectionUrl, service, method, messages) => {
@@ -154,7 +212,7 @@ export default function App() {
       responseError: null,
       sending: false,
       elapsed: 0,
-      status: "idle",
+      status: "idle"
     };
     setTabs((prev) => [...prev, tab]);
     setActiveTabId(tab.id);
@@ -209,7 +267,7 @@ export default function App() {
           requestJson: activeTab.requestBody,
           fileDescriptors: col.fileDescriptors,
           metadata: activeTab.metadata,
-          serverStreaming: isStreaming,
+          serverStreaming: isStreaming
         },
         tabId
       );
@@ -220,13 +278,15 @@ export default function App() {
       const msg = (err as Error).message ?? "Request failed";
       updateTab(tabId, {
         responseError: msg.includes("Cancelled") ? "Request cancelled." : msg,
-        status: "error",
+        status: "error"
       });
     } finally {
       unsubscribe?.();
       updateTab(tabId, { sending: false });
     }
   }
+
+  const monacoTheme = theme === "light" ? "vs" : "vs-dark";
 
   return (
     <div className="app">
@@ -236,6 +296,7 @@ export default function App() {
         selectedMethod={selectedMethod}
         onSelectMethod={handleSelectMethod}
         tabStatuses={new Map(tabs.map((t) => [`${t.collectionUrl}|${t.service.name}|${t.method.name}`, t.status]))}
+        onOpenSettings={() => setSettingsOpen(true)}
       />
       <div className="app-main">
         <TabBar tabs={tabs} activeTabId={activeTabId} onSelect={setActiveTabId} onClose={handleCloseTab} />
@@ -277,6 +338,7 @@ export default function App() {
                     onSend={handleSend}
                     requestType={activeTab.method.requestType}
                     messages={collections.find((c) => c.url === activeTab.collectionUrl)?.messages}
+                    monacoTheme={monacoTheme}
                   />
                 ) : (
                   <MetadataEditor
@@ -290,6 +352,7 @@ export default function App() {
                 streamTimestamps={activeTab.streamTimestamps}
                 error={activeTab.responseError}
                 loading={activeTab.sending}
+                monacoTheme={monacoTheme}
               />
             </>
           ) : (
@@ -298,6 +361,9 @@ export default function App() {
         </div>
       </div>
       <Snackbar message={snackbar.message} visible={snackbar.visible} />
+      {settingsOpen && (
+        <Settings theme={theme} onThemeChange={handleThemeChange} onClose={() => setSettingsOpen(false)} />
+      )}
     </div>
   );
 }

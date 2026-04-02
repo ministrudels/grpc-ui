@@ -7,7 +7,7 @@
   padding-bottom: 4px;
 }
 .collection-name {
-  color: #e2e2e2;
+  color: var(--text-primary);
   font-weight: 600;
   font-size: 11px;
   text-transform: uppercase;
@@ -18,7 +18,7 @@
   flex: 1;
 }
 .collection-chevron {
-  color: #686868;
+  color: var(--text-secondary);
   font-size: 9px;
   flex-shrink: 0;
   transition: transform 0.15s ease;
@@ -34,10 +34,10 @@
 }
 .collection-error {
   display: block;
-  color: #f38ba8;
+  color: var(--accent-red);
   font-size: 11px;
-  background: rgba(243, 139, 168, 0.1);
-  border: 1px solid rgba(243, 139, 168, 0.25);
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
   border-radius: 4px;
   padding: 5px 8px;
   margin: 4px 0;
@@ -50,32 +50,32 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  background: #1e1e2e;
-  border: 1px solid #45475a;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-raised);
   border-radius: 6px;
   padding: 8px 10px;
   max-width: 300px;
   white-space: normal;
   word-break: break-all;
   font-size: 11px;
-  color: #cdd6f4;
+  color: var(--text-bright);
   pointer-events: none;
   z-index: 9999;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   text-align: left;
 }
 .resync-tooltip strong {
-  color: #cba6f7;
+  color: var(--accent-purple);
   font-weight: 600;
 }
 .resync-tooltip span {
-  color: #a6adc8;
+  color: var(--text-overlay);
   line-height: 1.5;
 }
 .resync-btn {
   background: none;
   border: none;
-  color: #686868;
+  color: var(--text-secondary);
   cursor: pointer;
   font-size: 11px;
   padding: 0 2px;
@@ -88,7 +88,7 @@
 .delete-btn {
   background: none;
   border: none;
-  color: #686868;
+  color: var(--text-secondary);
   cursor: pointer;
   font-size: 11px;
   padding: 0 2px;
@@ -96,5 +96,5 @@
   line-height: 1;
 }
 .delete-btn:hover {
-  color: #f38ba8;
+  color: var(--accent-red);
 }

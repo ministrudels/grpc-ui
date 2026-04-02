@@ -3,12 +3,12 @@
   bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
-  background: #2d2d2d;
-  color: #e2e2e2;
+  background: var(--bg-element);
+  color: var(--text-primary);
   font-size: 13px;
   padding: 8px 16px;
   border-radius: 6px;
-  border: 1px solid #3a3a3a;
+  border: 1px solid var(--bg-element-hover);
   pointer-events: none;
   opacity: 1;
   transition: opacity 0.3s ease;

@@ -14,8 +14,8 @@
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #4a4a4a;
-  border-bottom: 1px solid #2d2d2d;
+  color: var(--text-placeholder);
+  border-bottom: 1px solid var(--border);
 }
 .metadata-rows {
   display: flex;
@@ -30,10 +30,10 @@
   align-items: center;
 }
 .metadata-input {
-  background: #141414;
-  border: 1px solid #2d2d2d;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
   border-radius: 3px;
-  color: #e2e2e2;
+  color: var(--text-primary);
   font-size: 12px;
   font-family: monospace;
   padding: 4px 8px;
@@ -41,12 +41,12 @@
 }
 .metadata-input:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: var(--accent-blue);
 }
 .metadata-remove {
   background: none;
   border: none;
-  color: #4a4a4a;
+  color: var(--text-placeholder);
   font-size: 16px;
   line-height: 1;
   cursor: pointer;
@@ -54,20 +54,20 @@
   text-align: center;
 }
 .metadata-remove:hover {
-  color: #ef4444;
+  color: var(--accent-red);
 }
 .metadata-add {
   align-self: flex-start;
   margin: 4px 12px;
   background: none;
-  border: 1px solid #2d2d2d;
+  border: 1px solid var(--border);
   border-radius: 3px;
-  color: #686868;
+  color: var(--text-secondary);
   font-size: 11px;
   padding: 3px 10px;
   cursor: pointer;
 }
 .metadata-add:hover {
-  border-color: #555;
-  color: #aaaaaa;
+  border-color: var(--border-raised);
+  color: var(--text-service);
 }

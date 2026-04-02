@@ -4,27 +4,26 @@
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  border-left: 1px solid #2d2d2d;
 }
 /* Height must match .editor-tabs so the border lines up seamlessly */
 .response-label {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #686868;
+  color: var(--text-secondary);
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 6px 12px;
-  border-bottom: 1px solid #2d2d2d;
+  border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
 .copy-btn {
   margin-left: auto;
   background: none;
-  border: 1px solid #3a3a3a;
+  border: 1px solid var(--bg-element-hover);
   border-radius: 3px;
-  color: #686868;
+  color: var(--text-secondary);
   font-size: 10px;
   line-height: 1;
   padding: 1px 7px;
@@ -34,12 +33,12 @@
   transition: color 0.1s, border-color 0.1s;
 }
 .copy-btn:hover {
-  color: #aaaaaa;
-  border-color: #555;
+  color: var(--text-service);
+  border-color: var(--border-raised);
 }
 .copy-btn.copied {
-  color: #22c55e;
-  border-color: #22c55e;
+  color: var(--status-success);
+  border-color: var(--status-success);
 }
 .response-body {
   flex: 1;
@@ -50,9 +49,11 @@
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
+  border-left: 1px solid var(--border);
 }
-.response-loading { color: #3b82f6; }
-.response-error   { color: #ef4444; }
+
+.response-loading { color: var(--status-sending); }
+.response-error   { color: var(--status-error); }
 .response-stream {
   flex: 1;
   overflow-y: auto;
@@ -60,10 +61,10 @@
 }
 .stream-message {
   padding: 6px 12px;
-  border-bottom: 1px solid #1f1f1f;
+  border-bottom: 1px solid var(--stream-msg-border);
 }
 .stream-message-error {
-  border-top: 1px solid #1f1f1f;
+  border-top: 1px solid var(--stream-msg-border);
   border-bottom: none;
 }
 .stream-message:last-child {
@@ -72,7 +73,7 @@
 .stream-ts {
   display: block;
   text-align: right;
-  color: #4a4a4a;
+  color: var(--text-placeholder);
   font-family: monospace;
   font-size: 11px;
   margin-bottom: 4px;
@@ -84,9 +85,11 @@
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
+  color: var(--text-primary);
 }
 .response-editor {
   flex: 1;
   overflow: hidden;
   min-height: 0;
+  border-left: 1px solid var(--border);
 }
