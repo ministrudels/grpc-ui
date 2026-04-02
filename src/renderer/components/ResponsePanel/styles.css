@@ -71,6 +71,7 @@
 }
 .stream-ts {
   display: block;
+  text-align: right;
   color: #4a4a4a;
   font-family: monospace;
   font-size: 11px;
