@@ -3,7 +3,7 @@ import AddCollectionDialog from "../AddCollectionDialog";
 import Collection from "../Collection";
 import type { GrpcMessage, GrpcMethod, GrpcService, ReflectProgress } from "../../global";
 import type { NamedCollection } from "../../global";
-import type { SelectedMethod } from "../../App";
+import type { SelectedMethod, TabStatus } from "../../App";
 import "./styles.css";
 
 export type OnSelectMethod = (
@@ -18,6 +18,7 @@ interface Props {
   onCollectionsChange: (next: NamedCollection[]) => void;
   selectedMethod: SelectedMethod | null;
   onSelectMethod: OnSelectMethod;
+  tabStatuses: Map<string, TabStatus>;
 }
 
 /**
@@ -26,7 +27,7 @@ interface Props {
  * reflection, and notifies the parent of collection changes so they are
  * persisted to localStorage. Renders a Collection tree for each saved server.
  */
-export default function Sidebar({ collections, onCollectionsChange, selectedMethod, onSelectMethod }: Props) {
+export default function Sidebar({ collections, onCollectionsChange, selectedMethod, onSelectMethod, tabStatuses }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [resyncing, setResyncing] = useState(0);
@@ -129,6 +130,7 @@ export default function Sidebar({ collections, onCollectionsChange, selectedMeth
           onDelete={handleDelete}
           error={resyncErrors[col.url]}
           query={query}
+          tabStatuses={tabStatuses}
         />
       ))}
 

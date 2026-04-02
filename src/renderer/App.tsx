@@ -232,6 +232,7 @@ export default function App() {
         onCollectionsChange={handleCollectionsChange}
         selectedMethod={selectedMethod}
         onSelectMethod={handleSelectMethod}
+        tabStatuses={new Map(tabs.map((t) => [`${t.collectionUrl}|${t.service.name}|${t.method.name}`, t.status]))}
       />
       <div style={styles.main}>
         <TabBar

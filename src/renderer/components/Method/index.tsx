@@ -1,9 +1,11 @@
 import type { GrpcMethod } from "../../global";
+import type { TabStatus } from "../../App";
 import "./styles.css";
 
 interface Props {
   method: GrpcMethod;
   active: boolean;
+  tabStatus: TabStatus | null;
   onClick: () => void;
 }
 
@@ -14,7 +16,7 @@ function methodBadge(method: GrpcMethod): { label: string; className: string } {
   return { label: "U", className: "badge-unary" };
 }
 
-export default function Method({ method, active, onClick }: Props) {
+export default function Method({ method, active, tabStatus, onClick }: Props) {
   const badge = methodBadge(method);
   return (
     <div
@@ -23,6 +25,9 @@ export default function Method({ method, active, onClick }: Props) {
     >
       <span className={`method-badge ${badge.className}`}>{badge.label}</span>
       <span className="method-name">{method.name}</span>
+      {tabStatus && tabStatus !== "idle" && (
+        <span className={`method-status method-status-${tabStatus}`} />
+      )}
     </div>
   );
 }

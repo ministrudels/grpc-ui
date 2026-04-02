@@ -64,10 +64,10 @@
   border-radius: 50%;
   flex-shrink: 0;
 }
-.tabbar-status-success { background: #a6e3a1; }
-.tabbar-status-error   { background: #f38ba8; }
+.tabbar-status-success { background: #22c55e; }
+.tabbar-status-error   { background: #ef4444; }
 .tabbar-status-sending {
-  background: #89b4fa;
+  background: #3b82f6;
   animation: tabbar-pulse 1s ease-in-out infinite;
 }
 @keyframes tabbar-pulse {
