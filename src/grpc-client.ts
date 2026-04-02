@@ -67,6 +67,7 @@ export interface SendRequestArgs {
   responseType: string;
   requestJson: string;
   fileDescriptors: string[];
+  metadata?: Array<{ key: string; value: string }>;
 }
 
 // ── Reflection client constructors ───────────────────────────────────────────
@@ -348,7 +349,7 @@ export async function discoverServices(
 // ── sendRequest ───────────────────────────────────────────────────────────────
 
 export async function sendRequest(args: SendRequestArgs, signal?: AbortSignal): Promise<unknown> {
-  const { url, serviceName, methodName, requestType, responseType, requestJson, fileDescriptors } = args;
+  const { url, serviceName, methodName, requestType, responseType, requestJson, fileDescriptors, metadata } = args;
 
   // Re-encode individual FileDescriptorProtos into a FileDescriptorSet binary so
   // protobufjs/ext/descriptor can build a fully-resolved Root from them.
@@ -414,6 +415,11 @@ export async function sendRequest(args: SendRequestArgs, signal?: AbortSignal): 
       if (!closed) { closed = true; client.close(); }
     }
 
+    const grpcMetadata = new grpc.Metadata();
+    for (const { key, value } of metadata ?? []) {
+      if (key.trim()) grpcMetadata.add(key.trim(), value);
+    }
+
     const call = client.makeUnaryRequest(
       `/${serviceName}/${methodName}`,
       (req: Buffer) => req,
@@ -425,7 +431,7 @@ export async function sendRequest(args: SendRequestArgs, signal?: AbortSignal): 
         }
       },
       requestBytes,
-      new grpc.Metadata(),
+      grpcMetadata,
       { deadline },
       (err, response) => {
         closeOnce();

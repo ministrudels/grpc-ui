@@ -3,11 +3,13 @@ import Sidebar from "./components/Sidebar";
 import TabBar from "./components/TabBar";
 import AddressBar from "./components/AddressBar";
 import RequestBody from "./components/RequestBody";
+import MetadataEditor, { type MetadataRow } from "./components/MetadataEditor";
 import ResponsePanel from "./components/ResponsePanel";
 import Snackbar from "./components/Snackbar";
 import type { GrpcMethod, GrpcService, NamedCollection } from "./global";
 import { skeletonFromMessage } from "./proto";
 import type { OnSelectMethod } from "./components/Sidebar";
+import "./app.css";
 
 export type { NamedCollection };
 
@@ -19,6 +21,8 @@ export type Tab = {
   service: GrpcService;
   method: GrpcMethod;
   requestBody: string;
+  metadata: MetadataRow[];
+  editorTab: "request" | "metadata";
   response: unknown;
   responseError: string | null;
   sending: boolean;
@@ -77,6 +81,13 @@ const styles: Record<string, React.CSSProperties> = {
     flex: 1,
     display: "flex",
     minHeight: 0
+  },
+  leftPanel: {
+    display: "flex",
+    flexDirection: "column",
+    flex: 1,
+    minWidth: 0,
+    minHeight: 0,
   },
   placeholder: {
     flex: 1,
@@ -155,7 +166,6 @@ export default function App() {
   });
 
   const handleSelectMethod: OnSelectMethod = (collectionUrl, service, method, messages) => {
-    // If this method already has a tab, just focus it
     const existing = tabs.find(
       (t) => t.collectionUrl === collectionUrl && t.service.name === service.name && t.method.name === method.name
     );
@@ -163,7 +173,6 @@ export default function App() {
       setActiveTabId(existing.id);
       return;
     }
-    // Otherwise open a new tab
     const skeleton = skeletonFromMessage(method.requestType, messages);
     const tab: Tab = {
       id: newTabId(),
@@ -171,6 +180,8 @@ export default function App() {
       service,
       method,
       requestBody: JSON.stringify(skeleton, null, 2),
+      metadata: [],
+      editorTab: "request",
       response: null,
       responseError: null,
       sending: false,
@@ -185,7 +196,6 @@ export default function App() {
     setTabs((prev) => {
       const next = prev.filter((t) => t.id !== id);
       if (id === activeTabId) {
-        // Focus the tab to the left, or the new last tab, or null
         const idx = prev.findIndex((t) => t.id === id);
         const fallback = next[Math.max(0, idx - 1)]?.id ?? next[0]?.id ?? null;
         setActiveTabId(fallback);
@@ -211,7 +221,8 @@ export default function App() {
         requestType: activeTab.method.requestType,
         responseType: activeTab.method.responseType,
         requestJson: activeTab.requestBody,
-        fileDescriptors: col.fileDescriptors
+        fileDescriptors: col.fileDescriptors,
+        metadata: activeTab.metadata,
       }, tabId);
       updateTab(tabId, { response: res, status: "success" });
     } catch (err: unknown) {
@@ -254,13 +265,41 @@ export default function App() {
         <div style={styles.panels}>
           {activeTab ? (
             <>
-              <RequestBody
-                value={activeTab.requestBody}
-                onChange={(v) => updateTab(activeTab.id, { requestBody: v })}
-                onSend={handleSend}
-                requestType={activeTab.method.requestType}
-                messages={collections.find((c) => c.url === activeTab.collectionUrl)?.messages}
-              />
+              <div style={styles.leftPanel}>
+                <div className="editor-tabs">
+                  <button
+                    className={`editor-tab${activeTab.editorTab === "request" ? " active" : ""}`}
+                    onClick={() => updateTab(activeTab.id, { editorTab: "request" })}
+                  >
+                    Request
+                  </button>
+                  <button
+                    className={`editor-tab${activeTab.editorTab === "metadata" ? " active" : ""}`}
+                    onClick={() => updateTab(activeTab.id, { editorTab: "metadata" })}
+                  >
+                    Metadata
+                    {activeTab.metadata.filter((r) => r.key.trim()).length > 0 && (
+                      <span className="editor-tab-badge">
+                        {activeTab.metadata.filter((r) => r.key.trim()).length}
+                      </span>
+                    )}
+                  </button>
+                </div>
+                {activeTab.editorTab === "request" ? (
+                  <RequestBody
+                    value={activeTab.requestBody}
+                    onChange={(v) => updateTab(activeTab.id, { requestBody: v })}
+                    onSend={handleSend}
+                    requestType={activeTab.method.requestType}
+                    messages={collections.find((c) => c.url === activeTab.collectionUrl)?.messages}
+                  />
+                ) : (
+                  <MetadataEditor
+                    rows={activeTab.metadata}
+                    onChange={(rows) => updateTab(activeTab.id, { metadata: rows })}
+                  />
+                )}
+              </div>
               <ResponsePanel
                 response={activeTab.response}
                 error={activeTab.responseError}
