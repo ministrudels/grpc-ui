@@ -13,7 +13,6 @@ import "./app.css";
 
 export type { NamedCollection };
 
-
 export type TabStatus = "idle" | "sending" | "success" | "error";
 
 export type Tab = {
@@ -75,7 +74,6 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     gap: 8,
     padding: "8px 12px",
-    borderBottom: "1px solid #2d2d2d",
     flexShrink: 0
   },
   panels: {
@@ -88,7 +86,7 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: "column",
     flex: 1,
     minWidth: 0,
-    minHeight: 0,
+    minHeight: 0
   },
   placeholder: {
     flex: 1,
@@ -128,9 +126,7 @@ export default function App() {
     const start = Date.now();
     const id = setInterval(() => {
       setTabs((prev) =>
-        prev.map((t) =>
-          t.id === activeTabId ? { ...t, elapsed: Math.floor((Date.now() - start) / 1000) } : t
-        )
+        prev.map((t) => (t.id === activeTabId ? { ...t, elapsed: Math.floor((Date.now() - start) / 1000) } : t))
       );
     }, 250);
     return () => clearInterval(id);
@@ -187,7 +183,7 @@ export default function App() {
       responseError: null,
       sending: false,
       elapsed: 0,
-      status: "idle",
+      status: "idle"
     };
     setTabs((prev) => [...prev, tab]);
     setActiveTabId(tab.id);
@@ -215,22 +211,25 @@ export default function App() {
     }
     updateTab(tabId, { sending: true, response: null, responseError: null, status: "sending" });
     try {
-      const res = await window.grpcui.sendRequest({
-        url: activeTab.collectionUrl,
-        serviceName: activeTab.service.name,
-        methodName: activeTab.method.name,
-        requestType: activeTab.method.requestType,
-        responseType: activeTab.method.responseType,
-        requestJson: activeTab.requestBody,
-        fileDescriptors: col.fileDescriptors,
-        metadata: activeTab.metadata,
-      }, tabId);
+      const res = await window.grpcui.sendRequest(
+        {
+          url: activeTab.collectionUrl,
+          serviceName: activeTab.service.name,
+          methodName: activeTab.method.name,
+          requestType: activeTab.method.requestType,
+          responseType: activeTab.method.responseType,
+          requestJson: activeTab.requestBody,
+          fileDescriptors: col.fileDescriptors,
+          metadata: activeTab.metadata
+        },
+        tabId
+      );
       updateTab(tabId, { response: res, status: "success" });
     } catch (err: unknown) {
       const msg = (err as Error).message ?? "Request failed";
       updateTab(tabId, {
         responseError: msg.includes("Cancelled") ? "Request cancelled." : msg,
-        status: "error",
+        status: "error"
       });
     } finally {
       updateTab(tabId, { sending: false });
@@ -247,12 +246,7 @@ export default function App() {
         tabStatuses={new Map(tabs.map((t) => [`${t.collectionUrl}|${t.service.name}|${t.method.name}`, t.status]))}
       />
       <div style={styles.main}>
-        <TabBar
-          tabs={tabs}
-          activeTabId={activeTabId}
-          onSelect={setActiveTabId}
-          onClose={handleCloseTab}
-        />
+        <TabBar tabs={tabs} activeTabId={activeTabId} onSelect={setActiveTabId} onClose={handleCloseTab} />
         <div style={styles.topRow}>
           <AddressBar
             url={activeTab?.collectionUrl ?? ""}
@@ -280,9 +274,7 @@ export default function App() {
                   >
                     Metadata
                     {activeTab.metadata.filter((r) => r.key.trim()).length > 0 && (
-                      <span className="editor-tab-badge">
-                        {activeTab.metadata.filter((r) => r.key.trim()).length}
-                      </span>
+                      <span className="editor-tab-badge">{activeTab.metadata.filter((r) => r.key.trim()).length}</span>
                     )}
                   </button>
                 </div>
