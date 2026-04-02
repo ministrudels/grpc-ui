@@ -4,7 +4,6 @@
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  border-left: 1px solid var(--border);
 }
 /* Height must match .editor-tabs so the border lines up seamlessly */
 .response-label {
@@ -50,7 +49,9 @@
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
+  border-left: 1px solid var(--border);
 }
+
 .response-loading { color: var(--status-sending); }
 .response-error   { color: var(--status-error); }
 .response-stream {
@@ -90,4 +91,5 @@
   flex: 1;
   overflow: hidden;
   min-height: 0;
+  border-left: 1px solid var(--border);
 }
