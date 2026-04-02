@@ -138,7 +138,7 @@ export default function App() {
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape" && activeTab?.sending) {
-        window.grpcui.cancelRequest();
+        window.grpcui.cancelRequest(activeTab.id);
         return;
       }
       if (!(e.key === "Enter" && e.metaKey)) return;
@@ -212,7 +212,7 @@ export default function App() {
         responseType: activeTab.method.responseType,
         requestJson: activeTab.requestBody,
         fileDescriptors: col.fileDescriptors
-      });
+      }, tabId);
       updateTab(tabId, { response: res, status: "success" });
     } catch (err: unknown) {
       const msg = (err as Error).message ?? "Request failed";
@@ -247,7 +247,7 @@ export default function App() {
             sending={activeTab?.sending ?? false}
             elapsed={activeTab?.elapsed ?? 0}
             onSend={handleSend}
-            onCancel={() => window.grpcui.cancelRequest()}
+            onCancel={() => activeTab && window.grpcui.cancelRequest(activeTab.id)}
           />
         </div>
         <div style={styles.panels}>
