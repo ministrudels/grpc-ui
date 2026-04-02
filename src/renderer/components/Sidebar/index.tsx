@@ -123,7 +123,7 @@ export default function Sidebar({ collections, onCollectionsChange, selectedMeth
         <input
           ref={searchRef}
           className="sidebar-search"
-          placeholder="Search methods…"
+          placeholder="Search methods… (⌘K)"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Escape") { setQuery(""); e.currentTarget.blur(); } }}
