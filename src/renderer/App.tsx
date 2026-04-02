@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Sidebar from "./components/Sidebar";
+import TabBar from "./components/TabBar";
 import AddressBar from "./components/AddressBar";
 import RequestBody from "./components/RequestBody";
 import ResponsePanel from "./components/ResponsePanel";
@@ -180,6 +181,19 @@ export default function App() {
     setActiveTabId(tab.id);
   };
 
+  function handleCloseTab(id: string) {
+    setTabs((prev) => {
+      const next = prev.filter((t) => t.id !== id);
+      if (id === activeTabId) {
+        // Focus the tab to the left, or the new last tab, or null
+        const idx = prev.findIndex((t) => t.id === id);
+        const fallback = next[Math.max(0, idx - 1)]?.id ?? next[0]?.id ?? null;
+        setActiveTabId(fallback);
+      }
+      return next;
+    });
+  }
+
   async function handleSend() {
     if (!activeTab || activeTab.sending) return;
     const tabId = activeTab.id;
@@ -220,6 +234,12 @@ export default function App() {
         onSelectMethod={handleSelectMethod}
       />
       <div style={styles.main}>
+        <TabBar
+          tabs={tabs}
+          activeTabId={activeTabId}
+          onSelect={setActiveTabId}
+          onClose={handleCloseTab}
+        />
         <div style={styles.topRow}>
           <AddressBar
             url={activeTab?.collectionUrl ?? ""}
