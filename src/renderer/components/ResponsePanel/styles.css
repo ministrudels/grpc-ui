@@ -62,11 +62,16 @@
   padding: 6px 12px;
   border-bottom: 1px solid var(--stream-msg-border);
 }
+.stream-message-error {
+  border-top: 1px solid var(--stream-msg-border);
+  border-bottom: none;
+}
 .stream-message:last-child {
   border-bottom: none;
 }
 .stream-ts {
   display: block;
+  text-align: right;
   color: var(--text-placeholder);
   font-family: monospace;
   font-size: 11px;

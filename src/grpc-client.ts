@@ -435,30 +435,41 @@ export async function sendRequest(
   if (args.serverStreaming) {
     return new Promise((resolve, reject) => {
       const results: unknown[] = [];
+      // No deadline: streams live until the server closes them or the user cancels.
+      // The deadline on unary calls guards initial connection; for streaming it would
+      // kill long-lived streams that are working fine.
       const call = client.makeServerStreamRequest(
         `/${serviceName}/${methodName}`,
         (req: Buffer) => req,
         deserialize as (buf: Buffer) => unknown,
         requestBytes,
         grpcMetadata,
-        { deadline }
+        {}
       );
+      let settled = false;
+      function settle(fn: () => void) {
+        if (!settled) { settled = true; closeOnce(); fn(); }
+      }
       signal?.addEventListener("abort", () => {
         call.cancel();
-        closeOnce();
-        reject(new Error("Cancelled"));
+        settle(() => reject(new Error("Cancelled")));
       }, { once: true });
       call.on("data", (data: unknown) => {
         results.push(data);
         onData?.(data);
       });
-      call.on("end", () => {
-        closeOnce();
-        resolve(results);
+      // status is the authoritative completion event in grpc-js; end fires after
+      // it but can be delayed. Resolve/reject here so the IPC handle returns as
+      // soon as the server closes the stream.
+      call.on("status", (status: grpc.StatusObject) => {
+        if (status.code === grpc.status.OK) {
+          settle(() => resolve(results));
+        } else {
+          settle(() => reject(Object.assign(new Error(status.details), { code: status.code })));
+        }
       });
       call.on("error", (err: Error) => {
-        closeOnce();
-        reject(err);
+        settle(() => reject(err));
       });
     });
   }
