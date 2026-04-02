@@ -1,5 +1,6 @@
-import Editor from "@monaco-editor/react";
-import { useState } from "react";
+import Editor, { type OnMount } from "@monaco-editor/react";
+import { useEffect, useRef, useState } from "react";
+import type * as monaco from "monaco-editor";
 import "./styles.css";
 
 interface Props {
@@ -34,6 +35,49 @@ function ResponseHeader({ copyText, streaming }: { copyText?: string; streaming?
   );
 }
 
+function ResponseEditor({ text, streaming }: { text: string; streaming: boolean }) {
+  const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
+
+  useEffect(() => {
+    if (!streaming || !editorRef.current) return;
+    const model = editorRef.current.getModel();
+    if (model) editorRef.current.revealLine(model.getLineCount());
+  }, [text, streaming]);
+
+  const handleMount: OnMount = (editor) => {
+    editorRef.current = editor;
+  };
+
+  return (
+    <div className="response-panel">
+      <ResponseHeader copyText={streaming ? undefined : text} streaming={streaming} />
+      <div className="response-editor">
+        <Editor
+          language="json"
+          theme="vs-dark"
+          value={text}
+          onMount={handleMount}
+          options={{
+            readOnly: true,
+            minimap: { enabled: false },
+            lineNumbers: "off",
+            folding: false,
+            scrollBeyondLastLine: false,
+            wordWrap: "on",
+            fontSize: 13,
+            fontFamily: "monospace",
+            renderLineHighlight: "none",
+            overviewRulerLanes: 0,
+            hideCursorInOverviewRuler: true,
+            scrollbar: { verticalScrollbarSize: 6, horizontalScrollbarSize: 6 },
+            domReadOnly: true
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function ResponsePanel({ response, error, loading }: Props) {
   if (loading && (response === null || response === undefined)) {
     return (
@@ -59,33 +103,7 @@ export default function ResponsePanel({ response, error, loading }: Props) {
 
   if (response !== null && response !== undefined) {
     const text = JSON.stringify(response, null, 2);
-    return (
-      <div className="response-panel">
-        <ResponseHeader copyText={loading ? undefined : text} streaming={loading} />
-        <div className="response-editor">
-          <Editor
-            language="json"
-            theme="vs-dark"
-            value={text}
-            options={{
-              readOnly: true,
-              minimap: { enabled: false },
-              lineNumbers: "off",
-              folding: false,
-              scrollBeyondLastLine: false,
-              wordWrap: "on",
-              fontSize: 13,
-              fontFamily: "monospace",
-              renderLineHighlight: "none",
-              overviewRulerLanes: 0,
-              hideCursorInOverviewRuler: true,
-              scrollbar: { verticalScrollbarSize: 6, horizontalScrollbarSize: 6 },
-              domReadOnly: true
-            }}
-          />
-        </div>
-      </div>
-    );
+    return <ResponseEditor text={text} streaming={loading} />;
   }
 
   return (
