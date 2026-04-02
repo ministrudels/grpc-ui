@@ -1,6 +1,11 @@
 .address-bar {
   display: flex;
   flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+.address-row {
+  display: flex;
   align-items: center;
   gap: 8px;
 }
@@ -43,13 +48,6 @@
 }
 .cancel-btn:hover {
   background: #f5a0b5;
-}
-.address-btn-group {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  flex-shrink: 0;
 }
 .address-timer {
   font-size: 10px;
