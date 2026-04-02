@@ -15,9 +15,9 @@ function buildMenu(): void {
         { role: "about" },
         { type: "separator" },
         {
-          label: "Settings…",
+          label: "Settings",
           accelerator: "CmdOrCtrl+,",
-          click: openSettings,
+          click: openSettings
         },
         { type: "separator" },
         { role: "services" },
@@ -26,12 +26,12 @@ function buildMenu(): void {
         { role: "hideOthers" },
         { role: "unhide" },
         { type: "separator" },
-        { role: "quit" },
-      ],
+        { role: "quit" }
+      ]
     },
     { role: "editMenu" as const },
     { role: "viewMenu" as const },
-    { role: "windowMenu" as const },
+    { role: "windowMenu" as const }
   ];
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
@@ -43,8 +43,8 @@ function createWindow(): void {
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
-      nodeIntegration: false,
-    },
+      nodeIntegration: false
+    }
   });
 
   if (!app.isPackaged && !process.env.PLAYWRIGHT) {
