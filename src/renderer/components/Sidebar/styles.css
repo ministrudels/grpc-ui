@@ -2,19 +2,19 @@
   position: relative;
   width: 240px;
   flex-shrink: 0;
-  border-right: 1px solid #2d2d2d;
+  border-right: 1px solid var(--border);
   padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  color: #686868;
+  color: var(--text-secondary);
   font-size: 13px;
   overflow-y: auto;
 }
 .sidebar-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(26, 26, 26, 0.85);
+  background: var(--sidebar-overlay-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -31,16 +31,16 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  border: 3px solid #3a3a3a;
-  border-top-color: #cba6f7;
+  border: 3px solid var(--bg-element-hover);
+  border-top-color: var(--accent-purple);
   animation: spin 0.7s linear infinite;
 }
 .sidebar-overlay-label {
-  color: #a6adc8;
+  color: var(--text-overlay);
   font-size: 11px;
   text-align: center;
-  background: #1e1e2e;
-  border: 1px solid #313244;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-overlay);
   border-radius: 6px;
   padding: 6px 10px;
 }
@@ -51,26 +51,26 @@
 }
 .sidebar-search {
   flex: 1;
-  background: #141414;
-  border: 1px solid #2d2d2d;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
   border-radius: 4px;
-  color: #e2e2e2;
+  color: var(--text-primary);
   font-size: 12px;
   padding: 5px 8px;
   outline: none;
   min-width: 0;
 }
 .sidebar-search::placeholder {
-  color: #4a4a4a;
+  color: var(--text-placeholder);
 }
 .sidebar-search:focus {
-  border-color: #3a3a3a;
+  border-color: var(--bg-element-hover);
 }
 .sidebar-add-btn {
-  background: #2d2d2d;
+  background: var(--bg-element);
   border: none;
   border-radius: 4px;
-  color: #e2e2e2;
+  color: var(--text-primary);
   font-size: 16px;
   width: 28px;
   height: 28px;
@@ -82,7 +82,7 @@
   line-height: 1;
 }
 .sidebar-add-btn:hover:not(:disabled) {
-  background: #3a3a3a;
+  background: var(--bg-element-hover);
 }
 .sidebar-add-btn:disabled {
   cursor: default;
@@ -97,12 +97,12 @@
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  border: 2px solid #686868;
-  border-top-color: #e2e2e2;
+  border: 2px solid var(--text-secondary);
+  border-top-color: var(--text-primary);
   display: inline-block;
   animation: spin 0.7s linear infinite;
 }
 .sidebar-error {
-  color: #f38ba8;
+  color: var(--accent-red);
   font-size: 12px;
 }

@@ -6,12 +6,12 @@
   min-height: 0;
 }
 .response-label {
-  color: #686868;
+  color: var(--text-secondary);
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 6px 12px 4px;
-  border-bottom: 1px solid #2d2d2d;
+  border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
 .response-body {
@@ -24,10 +24,10 @@
   white-space: pre-wrap;
   word-break: break-word;
 }
-.response-pending { color: #4a4a4a; }
-.response-loading  { color: #686868; }
-.response-error    { color: #f38ba8; }
-.response-success  { color: #a6e3a1; }
+.response-pending { color: var(--text-placeholder); }
+.response-loading  { color: var(--text-secondary); }
+.response-error    { color: var(--accent-red); }
+.response-success  { color: var(--accent-green); }
 .response-editor {
   flex: 1;
   overflow: hidden;

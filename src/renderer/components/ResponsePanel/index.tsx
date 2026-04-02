@@ -5,9 +5,10 @@ interface Props {
   response: unknown;
   error: string | null;
   loading: boolean;
+  monacoTheme: string;
 }
 
-export default function ResponsePanel({ response, error, loading }: Props) {
+export default function ResponsePanel({ response, error, loading, monacoTheme }: Props) {
   if (loading) {
     return (
       <div className="response-panel">
@@ -33,7 +34,7 @@ export default function ResponsePanel({ response, error, loading }: Props) {
         <div className="response-editor">
           <Editor
             language="json"
-            theme="vs-dark"
+            theme={monacoTheme}
             value={JSON.stringify(response, null, 2)}
             options={{
               readOnly: true,

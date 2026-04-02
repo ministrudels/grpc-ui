@@ -10,21 +10,21 @@
   margin-top: 2px;
 }
 .method:hover {
-  background: #242424;
+  background: var(--bg-hover);
 }
 .method.active {
-  background: #2d2d2d;
-  color: #e2e2e2;
+  background: var(--bg-element);
+  color: var(--text-primary);
 }
 .method-name {
-  color: #f0f0f0;
+  color: var(--text-method);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   min-width: 0;
 }
 .method.active .method-name {
-  color: #e2e2e2;
+  color: var(--text-primary);
 }
 .method-badge {
   font-size: 9px;
@@ -35,7 +35,7 @@
   flex-shrink: 0;
   line-height: 1.4;
 }
-.badge-unary  { background: rgba(166, 227, 161, 0.15); color: #a6e3a1; }
-.badge-server { background: rgba(137, 180, 250, 0.15); color: #89b4fa; }
-.badge-client { background: rgba(250, 179, 135, 0.15); color: #fab387; }
-.badge-bidi   { background: rgba(203, 166, 247, 0.15); color: #cba6f7; }
+.badge-unary  { background: var(--badge-unary-bg);  color: var(--accent-green); }
+.badge-server { background: var(--badge-server-bg); color: var(--accent-blue); }
+.badge-client { background: var(--badge-client-bg); color: var(--accent-orange); }
+.badge-bidi   { background: var(--badge-bidi-bg);   color: var(--accent-purple); }

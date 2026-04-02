@@ -1,15 +1,15 @@
 .dialog-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: var(--dialog-overlay-bg);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 100;
 }
 .dialog {
-  background: #141414;
-  border: 1px solid #2d2d2d;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
   border-radius: 6px;
   padding: 24px;
   width: 400px;
@@ -18,12 +18,12 @@
   gap: 16px;
 }
 .dialog-title {
-  color: #e2e2e2;
+  color: var(--text-primary);
   font-size: 14px;
   font-weight: 600;
 }
 .dialog-subtitle {
-  color: #686868;
+  color: var(--text-secondary);
   font-size: 12px;
   margin-top: 2px;
 }
@@ -33,14 +33,14 @@
   gap: 6px;
 }
 .dialog-field-label {
-  color: #9a9a9a;
+  color: var(--text-field-label);
   font-size: 12px;
 }
 .dialog-input {
-  background: #1a1a1a;
-  border: 1px solid #2d2d2d;
+  background: var(--bg-base);
+  border: 1px solid var(--border);
   border-radius: 4px;
-  color: #e2e2e2;
+  color: var(--text-primary);
   font-size: 13px;
   padding: 8px 10px;
   width: 100%;
@@ -52,18 +52,18 @@
 }
 .dialog-cancel {
   background: transparent;
-  border: 1px solid #2d2d2d;
+  border: 1px solid var(--border);
   border-radius: 4px;
-  color: #686868;
+  color: var(--text-secondary);
   font-size: 13px;
   padding: 6px 16px;
   cursor: pointer;
 }
 .dialog-confirm {
-  background: #89b4fa;
+  background: var(--accent-blue);
   border: none;
   border-radius: 4px;
-  color: #1a1a1a;
+  color: var(--text-on-accent);
   font-size: 13px;
   font-weight: 600;
   padding: 6px 16px;

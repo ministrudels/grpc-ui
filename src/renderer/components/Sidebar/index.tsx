@@ -18,6 +18,7 @@ interface Props {
   onCollectionsChange: (next: NamedCollection[]) => void;
   selectedMethod: SelectedMethod | null;
   onSelectMethod: OnSelectMethod;
+  onOpenSettings: () => void;
 }
 
 /**
@@ -26,7 +27,7 @@ interface Props {
  * reflection, and notifies the parent of collection changes so they are
  * persisted to localStorage. Renders a Collection tree for each saved server.
  */
-export default function Sidebar({ collections, onCollectionsChange, selectedMethod, onSelectMethod }: Props) {
+export default function Sidebar({ collections, onCollectionsChange, selectedMethod, onSelectMethod, onOpenSettings }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [resyncing, setResyncing] = useState(0);
@@ -112,6 +113,9 @@ export default function Sidebar({ collections, onCollectionsChange, selectedMeth
           onChange={(e) => setQuery(e.target.value)}
           spellCheck={false}
         />
+        <button className="sidebar-add-btn" onClick={onOpenSettings} title="Settings (⌘/Ctrl+,)">
+          ⚙
+        </button>
         <button className="sidebar-add-btn" onClick={() => setDialogOpen(true)} disabled={busy} title="Add collection">
           {loading ? <span className="sidebar-spinner-icon" /> : "+"}
         </button>

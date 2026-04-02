@@ -11,6 +11,7 @@ interface Props {
   onSend: () => void;
   requestType?: string;
   messages?: GrpcMessage[];
+  monacoTheme: string;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -27,7 +28,7 @@ function applySchema(monaco: any, requestType: string | undefined, messages: Grp
   });
 }
 
-export default function RequestBody({ value, onChange, onSend, requestType, messages = [] }: Props) {
+export default function RequestBody({ value, onChange, onSend, requestType, messages = [], monacoTheme }: Props) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const monacoRef = useRef<any>(null);
 
@@ -49,7 +50,7 @@ export default function RequestBody({ value, onChange, onSend, requestType, mess
         <Editor
           path="request.json"
           language="json"
-          theme="vs-dark"
+          theme={monacoTheme}
           value={value}
           onChange={(v) => onChange(v ?? "")}
           onMount={handleMount}

@@ -4,11 +4,14 @@ import AddressBar from "./components/AddressBar";
 import RequestBody from "./components/RequestBody";
 import ResponsePanel from "./components/ResponsePanel";
 import Snackbar from "./components/Snackbar";
+import Settings from "./components/Settings";
 import type { GrpcMethod, GrpcService, NamedCollection } from "./global";
 import { skeletonFromMessage } from "./proto";
 import type { OnSelectMethod } from "./components/Sidebar";
 
 export type { NamedCollection };
+
+export type Theme = "dark" | "light";
 
 export type SelectedMethod = {
   collectionUrl: string;
@@ -17,6 +20,7 @@ export type SelectedMethod = {
 };
 
 const STORAGE_KEY = "grpcui:collections";
+const SETTINGS_KEY = "grpcui:settings";
 
 function loadCollections(): NamedCollection[] {
   try {
@@ -31,6 +35,21 @@ function saveCollections(collections: NamedCollection[]): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(collections));
 }
 
+function loadTheme(): Theme {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (!raw) return "dark";
+    const settings = JSON.parse(raw) as { theme?: string };
+    return settings.theme === "light" ? "light" : "dark";
+  } catch {
+    return "dark";
+  }
+}
+
+function saveTheme(theme: Theme): void {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify({ theme }));
+}
+
 // ── Skeleton JSON generation ──────────────────────────────────────────────────
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -39,8 +58,8 @@ const styles: Record<string, React.CSSProperties> = {
   app: {
     display: "flex",
     height: "100vh",
-    background: "#1a1a1a",
-    color: "#e2e2e2"
+    background: "var(--bg-base)",
+    color: "var(--text-primary)"
   },
   main: {
     flex: 1,
@@ -53,7 +72,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     gap: 8,
     padding: "8px 12px",
-    borderBottom: "1px solid #2d2d2d",
+    borderBottom: "1px solid var(--border)",
     flexShrink: 0
   },
   panels: {
@@ -66,7 +85,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    color: "#4a4a4a",
+    color: "var(--text-placeholder)",
     fontSize: 14
   }
 };
@@ -81,6 +100,17 @@ export default function App() {
   const [elapsed, setElapsed] = useState(0);
   const [snackbar, setSnackbar] = useState<{ message: string; visible: boolean }>({ message: "", visible: false });
   const snackbarTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [theme, setTheme] = useState<Theme>(loadTheme);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
+
+  function handleThemeChange(next: Theme) {
+    setTheme(next);
+    saveTheme(next);
+  }
 
   useEffect(() => {
     if (!sending) { setElapsed(0); return; }
@@ -102,9 +132,20 @@ export default function App() {
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape" && sending) {
-        window.grpcui.cancelRequest();
+      if (e.key === "," && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setSettingsOpen(true);
         return;
+      }
+      if (e.key === "Escape") {
+        if (settingsOpen) {
+          setSettingsOpen(false);
+          return;
+        }
+        if (sending) {
+          window.grpcui.cancelRequest();
+          return;
+        }
       }
       if (!(e.key === "Enter" && e.metaKey)) return;
       if (!selectedMethod) {
@@ -156,6 +197,8 @@ export default function App() {
     }
   }
 
+  const monacoTheme = theme === "light" ? "vs" : "vs-dark";
+
   return (
     <div style={styles.app}>
       <Sidebar
@@ -163,6 +206,7 @@ export default function App() {
         onCollectionsChange={handleCollectionsChange}
         selectedMethod={selectedMethod}
         onSelectMethod={handleSelectMethod}
+        onOpenSettings={() => setSettingsOpen(true)}
       />
       <div style={styles.main}>
         <div style={styles.topRow}>
@@ -184,8 +228,9 @@ export default function App() {
                 onSend={handleSend}
                 requestType={selectedMethod?.method.requestType}
                 messages={collections.find((c) => c.url === selectedMethod?.collectionUrl)?.messages}
+                monacoTheme={monacoTheme}
               />
-              <ResponsePanel response={response} error={responseError} loading={sending} />
+              <ResponsePanel response={response} error={responseError} loading={sending} monacoTheme={monacoTheme} />
             </>
           ) : (
             <div style={styles.placeholder}>Select a method from the sidebar to get started</div>
@@ -193,6 +238,13 @@ export default function App() {
         </div>
       </div>
       <Snackbar message={snackbar.message} visible={snackbar.visible} />
+      {settingsOpen && (
+        <Settings
+          theme={theme}
+          onThemeChange={handleThemeChange}
+          onClose={() => setSettingsOpen(false)}
+        />
+      )}
     </div>
   );
 }
