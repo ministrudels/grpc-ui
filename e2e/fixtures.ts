@@ -47,6 +47,11 @@ export const test = base.extend<Fixtures>({
         call.write({ message: "stream message 3" });
         call.end();
       },
+      sayHelloStream2: (call: grpc.ServerWritableStream<unknown, unknown>) => {
+        call.write({ message: "stream2 message 1" });
+        call.write({ message: "stream2 message 2" });
+        call.end();
+      },
     });
 
     const reflection = new ReflectionService(packageDef);
@@ -65,6 +70,18 @@ export const test = base.extend<Fixtures>({
 });
 
 export { expect } from "@playwright/test";
+
+/** Add a collection via the UI dialog (real reflection — gives valid file descriptors). */
+export async function addCollection(window: Page, name: string, url: string) {
+  await window.evaluate(() => localStorage.removeItem("grpcui:collections"));
+  await window.reload();
+  await window.waitForLoadState("domcontentloaded");
+  await window.locator("button[title='Add collection']").click();
+  await window.locator(".dialog-input").nth(0).fill(name);
+  await window.locator(".dialog-input").nth(1).fill(url);
+  await window.locator(".dialog-confirm").click();
+  await window.locator(".sidebar-overlay").waitFor({ state: "hidden" });
+}
 
 /** Seed localStorage with a collection and reload so the sidebar renders it. */
 export async function seedCollection(
