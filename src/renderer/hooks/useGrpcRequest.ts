@@ -1,12 +1,6 @@
 import { useEffect, useState } from "react";
-import { useMutation } from "@tanstack/react-query";
 import type { Tab } from "../App";
 import type { NamedCollection } from "../global";
-
-type MutationArgs = {
-  tab: Tab;
-  col: NamedCollection;
-};
 
 export type UseGrpcRequestReturn = {
   isPending: boolean;
@@ -25,64 +19,7 @@ export function useGrpcRequest(
 ): UseGrpcRequestReturn {
   const [elapsed, setElapsed] = useState(0);
 
-  const mutation = useMutation<unknown, Error, MutationArgs>({
-    mutationFn: async ({ tab, col }) => {
-      const tabId = tab.id;
-      const isStreaming = tab.method.serverStreaming;
-
-      let unsubscribe: (() => void) | null = null;
-      if (isStreaming) {
-        unsubscribe = window.grpcui.onStreamData(({ requestId, data }) => {
-          if (requestId !== tabId) return;
-          const ts = Date.now();
-          setTabs((prev) =>
-            prev.map((t) => {
-              if (t.id !== tabId) return t;
-              const existing = Array.isArray(t.response) ? (t.response as unknown[]) : [];
-              return { ...t, response: [...existing, data], streamTimestamps: [...t.streamTimestamps, ts] };
-            })
-          );
-        });
-      }
-
-      try {
-        return await window.grpcui.sendRequest(
-          {
-            url: tab.collectionUrl,
-            serviceName: tab.service.name,
-            methodName: tab.method.name,
-            requestType: tab.method.requestType,
-            responseType: tab.method.responseType,
-            requestJson: tab.requestBody,
-            fileDescriptors: col.fileDescriptors,
-            metadata: tab.metadata,
-            serverStreaming: isStreaming
-          },
-          tabId
-        );
-      } finally {
-        unsubscribe?.();
-      }
-    },
-    onMutate: ({ tab }) => {
-      updateTab(tab.id, { sending: true, response: null, streamTimestamps: [], responseError: null, status: "sending" });
-    },
-    onSuccess: (data, { tab }) => {
-      updateTab(tab.id, { response: data, status: "success" });
-    },
-    onError: (err, { tab }) => {
-      const msg = err.message ?? "Request failed";
-      updateTab(tab.id, {
-        responseError: msg.includes("Cancelled") ? "Request cancelled." : msg,
-        status: "error"
-      });
-    },
-    onSettled: (_data, _err, { tab }) => {
-      updateTab(tab.id, { sending: false });
-    }
-  });
-
-  // Elapsed timer — driven by the active tab's sending state, not the shared mutation
+  // Elapsed timer — per-tab, resets when the active tab changes or stops sending
   const tabSending = activeTab?.sending ?? false;
   useEffect(() => {
     if (!tabSending) {
@@ -94,14 +31,59 @@ export function useGrpcRequest(
     return () => clearInterval(id);
   }, [tabSending, activeTab?.id]);
 
-  function send(): void {
-    if (!activeTab || mutation.isPending) return;
+  async function send(): Promise<void> {
+    if (!activeTab || activeTab.sending) return;
+    const tabId = activeTab.id;
     const col = collections.find((c) => c.url === activeTab.collectionUrl);
     if (!col?.fileDescriptors?.length) {
-      updateTab(activeTab.id, { responseError: "No schema available — resync the collection first." });
+      updateTab(tabId, { responseError: "No schema available — resync the collection first." });
       return;
     }
-    mutation.mutate({ tab: activeTab, col });
+
+    const isStreaming = activeTab.method.serverStreaming;
+    updateTab(tabId, { sending: true, response: null, streamTimestamps: [], responseError: null, status: "sending" });
+
+    let unsubscribe: (() => void) | null = null;
+    if (isStreaming) {
+      unsubscribe = window.grpcui.onStreamData(({ requestId, data }) => {
+        if (requestId !== tabId) return;
+        const ts = Date.now();
+        setTabs((prev) =>
+          prev.map((t) => {
+            if (t.id !== tabId) return t;
+            const existing = Array.isArray(t.response) ? (t.response as unknown[]) : [];
+            return { ...t, response: [...existing, data], streamTimestamps: [...t.streamTimestamps, ts] };
+          })
+        );
+      });
+    }
+
+    try {
+      const res = await window.grpcui.sendRequest(
+        {
+          url: activeTab.collectionUrl,
+          serviceName: activeTab.service.name,
+          methodName: activeTab.method.name,
+          requestType: activeTab.method.requestType,
+          responseType: activeTab.method.responseType,
+          requestJson: activeTab.requestBody,
+          fileDescriptors: col.fileDescriptors,
+          metadata: activeTab.metadata,
+          serverStreaming: isStreaming
+        },
+        tabId
+      );
+      updateTab(tabId, { response: res, status: "success" });
+    } catch (err: unknown) {
+      const msg = (err as Error).message ?? "Request failed";
+      updateTab(tabId, {
+        responseError: msg.includes("Cancelled") ? "Request cancelled." : msg,
+        status: "error"
+      });
+    } finally {
+      unsubscribe?.();
+      updateTab(tabId, { sending: false });
+    }
   }
 
   function cancel(): void {
