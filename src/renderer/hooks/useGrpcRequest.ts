@@ -82,16 +82,17 @@ export function useGrpcRequest(
     }
   });
 
-  // Elapsed timer — driven by mutation pending state
+  // Elapsed timer — driven by the active tab's sending state, not the shared mutation
+  const tabSending = activeTab?.sending ?? false;
   useEffect(() => {
-    if (!mutation.isPending) {
+    if (!tabSending) {
       setElapsed(0);
       return;
     }
     const start = Date.now();
     const id = setInterval(() => setElapsed(Math.floor((Date.now() - start) / 1000)), 250);
     return () => clearInterval(id);
-  }, [mutation.isPending]);
+  }, [tabSending, activeTab?.id]);
 
   function send(): void {
     if (!activeTab || mutation.isPending) return;
@@ -108,9 +109,9 @@ export function useGrpcRequest(
   }
 
   return {
-    isPending: mutation.isPending,
-    isSuccess: mutation.isSuccess,
-    isError: mutation.isError,
+    isPending: activeTab?.sending ?? false,
+    isSuccess: activeTab?.status === "success",
+    isError: activeTab?.status === "error",
     elapsed,
     send,
     cancel
