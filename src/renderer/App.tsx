@@ -198,13 +198,13 @@ export default function App() {
         return;
       }
 
-      // Navigate to previous / next tab
-      if (cmd && e.shiftKey && (e.key === "[" || e.key === "]")) {
+      // Navigate to previous / next tab (Ctrl+Tab / Ctrl+Shift+Tab)
+      if (e.ctrlKey && e.key === "Tab") {
         e.preventDefault();
         if (allTabs.length < 2) return;
         const idx = allTabs.findIndex((t) => t.id === currentTabId);
-        const next = e.key === "[" ? allTabs[idx - 1] ?? allTabs[allTabs.length - 1]
-                                   : allTabs[idx + 1] ?? allTabs[0];
+        const next = e.shiftKey ? allTabs[idx - 1] ?? allTabs[allTabs.length - 1]
+                                : allTabs[idx + 1] ?? allTabs[0];
         selectTab(next.id);
         return;
       }
