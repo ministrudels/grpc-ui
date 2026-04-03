@@ -10,6 +10,7 @@ import Settings from "./components/Settings";
 import type { GrpcMethod, GrpcService, NamedCollection } from "./global";
 import { skeletonFromMessage } from "./proto";
 import type { OnSelectMethod } from "./components/Sidebar";
+import { useGrpcRequest } from "./hooks/useGrpcRequest";
 import "./app.css";
 
 export type { NamedCollection };
@@ -87,13 +88,17 @@ export default function App() {
   // Always holds the latest values so the single keydown listener never reads stale closure state
   const latestRef = useRef<{
     activeTab: Tab | null;
-    handleSend: () => void;
+    send: () => void;
+    cancel: () => void;
+    isPending: boolean;
     showSnackbar: (m: string) => void;
     settingsOpen: boolean;
     setSettingsOpen: (v: boolean) => void;
   }>({
     activeTab: null,
-    handleSend: () => {},
+    send: () => {},
+    cancel: () => {},
+    isPending: false,
     showSnackbar: () => {},
     settingsOpen: false,
     setSettingsOpen: () => {}
@@ -122,20 +127,7 @@ export default function App() {
     setTabs((prev) => prev.map((t) => (t.id === id ? { ...t, ...patch } : t)));
   }
 
-  const activeSending = activeTab?.sending ?? false;
-  useEffect(() => {
-    if (!activeSending || !activeTabId) {
-      if (activeTabId) setTabs((prev) => prev.map((t) => (t.id === activeTabId ? { ...t, elapsed: 0 } : t)));
-      return;
-    }
-    const start = Date.now();
-    const id = setInterval(() => {
-      setTabs((prev) =>
-        prev.map((t) => (t.id === activeTabId ? { ...t, elapsed: Math.floor((Date.now() - start) / 1000) } : t))
-      );
-    }, 250);
-    return () => clearInterval(id);
-  }, [activeSending, activeTabId]);
+  const { isPending, send, cancel, elapsed } = useGrpcRequest(activeTab, collections, updateTab, setTabs);
 
   function showSnackbar(message: string) {
     if (snackbarTimer.current) clearTimeout(snackbarTimer.current);
@@ -150,7 +142,9 @@ export default function App() {
 
   // Keep ref in sync so the keydown listener always reads current state
   latestRef.current.activeTab = activeTab;
-  latestRef.current.handleSend = handleSend;
+  latestRef.current.send = send;
+  latestRef.current.cancel = cancel;
+  latestRef.current.isPending = isPending;
   latestRef.current.showSnackbar = showSnackbar;
   latestRef.current.settingsOpen = settingsOpen;
   latestRef.current.setSettingsOpen = setSettingsOpen;
@@ -159,7 +153,9 @@ export default function App() {
     function onKeyDown(e: KeyboardEvent) {
       const {
         activeTab: tab,
-        handleSend: send,
+        send: doSend,
+        cancel: doCancel,
+        isPending: pending,
         showSnackbar: snack,
         settingsOpen: isSettingsOpen,
         setSettingsOpen: openSettings
@@ -174,8 +170,8 @@ export default function App() {
           openSettings(false);
           return;
         }
-        if (tab?.sending) {
-          window.grpcui.cancelRequest(tab.id);
+        if (pending) {
+          doCancel();
           return;
         }
         return;
@@ -183,10 +179,10 @@ export default function App() {
       if (!(e.key === "Enter" && e.metaKey)) return;
       if (!tab) {
         snack("Select a method before sending");
-      } else if (tab.sending) {
+      } else if (pending) {
         snack("A request is already in flight");
       } else {
-        send();
+        doSend();
       }
     }
     window.addEventListener("keydown", onKeyDown);
@@ -234,62 +230,6 @@ export default function App() {
     });
   }
 
-  async function handleSend() {
-    if (!activeTab || activeTab.sending) return;
-    const tabId = activeTab.id;
-    const col = collections.find((c) => c.url === activeTab.collectionUrl);
-    if (!col?.fileDescriptors?.length) {
-      updateTab(tabId, { responseError: "No schema available — resync the collection first." });
-      return;
-    }
-    const isStreaming = activeTab.method.serverStreaming;
-    updateTab(tabId, { sending: true, response: null, streamTimestamps: [], responseError: null, status: "sending" });
-
-    let unsubscribe: (() => void) | null = null;
-    if (isStreaming) {
-      unsubscribe = window.grpcui.onStreamData(({ requestId, data }) => {
-        if (requestId !== tabId) return;
-        const ts = Date.now();
-        setTabs((prev) =>
-          prev.map((t) => {
-            if (t.id !== tabId) return t;
-            const existing = Array.isArray(t.response) ? (t.response as unknown[]) : [];
-            return { ...t, response: [...existing, data], streamTimestamps: [...t.streamTimestamps, ts] };
-          })
-        );
-      });
-    }
-
-    try {
-      const res = await window.grpcui.sendRequest(
-        {
-          url: activeTab.collectionUrl,
-          serviceName: activeTab.service.name,
-          methodName: activeTab.method.name,
-          requestType: activeTab.method.requestType,
-          responseType: activeTab.method.responseType,
-          requestJson: activeTab.requestBody,
-          fileDescriptors: col.fileDescriptors,
-          metadata: activeTab.metadata,
-          serverStreaming: isStreaming
-        },
-        tabId
-      );
-      // For streaming, res is the complete array — use it as the source of truth.
-      // For unary, res is the single response object.
-      updateTab(tabId, { response: res, status: "success" });
-    } catch (err: unknown) {
-      const msg = (err as Error).message ?? "Request failed";
-      updateTab(tabId, {
-        responseError: msg.includes("Cancelled") ? "Request cancelled." : msg,
-        status: "error"
-      });
-    } finally {
-      unsubscribe?.();
-      updateTab(tabId, { sending: false });
-    }
-  }
-
   const monacoTheme = theme === "light" ? "vs" : "vs-dark";
 
   return (
@@ -306,11 +246,11 @@ export default function App() {
         <div className="app-top-row">
           <AddressBar
             url={activeTab?.collectionUrl ?? ""}
-            canSend={!!activeTab && !activeTab.sending}
-            sending={activeTab?.sending ?? false}
-            elapsed={activeTab?.elapsed ?? 0}
-            onSend={handleSend}
-            onCancel={() => activeTab && window.grpcui.cancelRequest(activeTab.id)}
+            canSend={!!activeTab && !isPending}
+            sending={isPending}
+            elapsed={elapsed}
+            onSend={send}
+            onCancel={cancel}
           />
         </div>
         <div className="app-panels">
@@ -338,7 +278,7 @@ export default function App() {
                   <RequestBody
                     value={activeTab.requestBody}
                     onChange={(v) => updateTab(activeTab.id, { requestBody: v })}
-                    onSend={handleSend}
+                    onSend={send}
                     requestType={activeTab.method.requestType}
                     messages={collections.find((c) => c.url === activeTab.collectionUrl)?.messages}
                     monacoTheme={monacoTheme}
@@ -354,7 +294,7 @@ export default function App() {
                 response={activeTab.response}
                 streamTimestamps={activeTab.streamTimestamps}
                 error={activeTab.responseError}
-                loading={activeTab.sending}
+                loading={isPending}
                 monacoTheme={monacoTheme}
               />
             </>
