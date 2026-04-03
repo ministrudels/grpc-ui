@@ -88,6 +88,10 @@ export default function App() {
   // Always holds the latest values so the single keydown listener never reads stale closure state
   const latestRef = useRef<{
     activeTab: Tab | null;
+    tabs: Tab[];
+    activeTabId: string | null;
+    setActiveTabId: (id: string | null) => void;
+    closeTab: (id: string) => void;
     send: () => void;
     cancel: () => void;
     isPending: boolean;
@@ -96,6 +100,10 @@ export default function App() {
     setSettingsOpen: (v: boolean) => void;
   }>({
     activeTab: null,
+    tabs: [],
+    activeTabId: null,
+    setActiveTabId: () => {},
+    closeTab: () => {},
     send: () => {},
     cancel: () => {},
     isPending: false,
@@ -142,6 +150,10 @@ export default function App() {
 
   // Keep ref in sync so the keydown listener always reads current state
   latestRef.current.activeTab = activeTab;
+  latestRef.current.tabs = tabs;
+  latestRef.current.activeTabId = activeTabId;
+  latestRef.current.setActiveTabId = setActiveTabId;
+  latestRef.current.closeTab = handleCloseTab;
   latestRef.current.send = send;
   latestRef.current.cancel = cancel;
   latestRef.current.isPending = isPending;
@@ -153,6 +165,10 @@ export default function App() {
     function onKeyDown(e: KeyboardEvent) {
       const {
         activeTab: tab,
+        tabs: allTabs,
+        activeTabId: currentTabId,
+        setActiveTabId: selectTab,
+        closeTab,
         send: doSend,
         cancel: doCancel,
         isPending: pending,
@@ -160,23 +176,48 @@ export default function App() {
         settingsOpen: isSettingsOpen,
         setSettingsOpen: openSettings
       } = latestRef.current;
-      if (e.key === "," && (e.metaKey || e.ctrlKey)) {
+
+      const cmd = e.metaKey || e.ctrlKey;
+
+      if (e.key === "," && cmd) {
         e.preventDefault();
         openSettings(true);
         return;
       }
+
       if (e.key === "Escape") {
-        if (isSettingsOpen) {
-          openSettings(false);
-          return;
-        }
-        if (pending) {
-          doCancel();
-          return;
-        }
+        if (isSettingsOpen) { openSettings(false); return; }
+        if (pending) { doCancel(); return; }
         return;
       }
-      if (!(e.key === "Enter" && e.metaKey)) return;
+
+      // Close current tab
+      if (e.key === "w" && cmd) {
+        e.preventDefault();
+        if (currentTabId) closeTab(currentTabId);
+        return;
+      }
+
+      // Navigate to previous / next tab
+      if (cmd && e.shiftKey && (e.key === "[" || e.key === "]")) {
+        e.preventDefault();
+        if (allTabs.length < 2) return;
+        const idx = allTabs.findIndex((t) => t.id === currentTabId);
+        const next = e.key === "[" ? allTabs[idx - 1] ?? allTabs[allTabs.length - 1]
+                                   : allTabs[idx + 1] ?? allTabs[0];
+        selectTab(next.id);
+        return;
+      }
+
+      // Jump to tab by number (Cmd+1 … Cmd+9)
+      if (cmd && e.key >= "1" && e.key <= "9") {
+        e.preventDefault();
+        const target = allTabs[parseInt(e.key, 10) - 1];
+        if (target) selectTab(target.id);
+        return;
+      }
+
+      if (!(e.key === "Enter" && cmd)) return;
       if (!tab) {
         snack("Select a method before sending");
       } else if (pending) {
