@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Menu } from "electron";
+import { app, BrowserWindow, ipcMain, Menu, nativeImage } from "electron";
 import path from "path";
 import { discoverServices, sendRequest, type SendRequestArgs } from "./grpc-client";
 
@@ -82,7 +82,7 @@ ipcMain.on("grpc:cancel-request", (_event, requestId: string) => {
 app.whenReady().then(() => {
   buildMenu();
   createWindow();
-  if (process.platform === "darwin") {
+  if (process.platform === "darwin" && app.dock) {
     app.dock.setIcon(
       nativeImage.createFromPath(
         app.isPackaged
