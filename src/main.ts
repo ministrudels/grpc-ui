@@ -82,6 +82,15 @@ ipcMain.on("grpc:cancel-request", (_event, requestId: string) => {
 app.whenReady().then(() => {
   buildMenu();
   createWindow();
+  if (process.platform === "darwin") {
+    app.dock.setIcon(
+      nativeImage.createFromPath(
+        app.isPackaged
+          ? path.join(__dirname, "../assets/icon.icns")
+          : path.join(__dirname, "../../src/assets/icon.icns")
+      )
+    );
+  }
 });
 
 app.on("window-all-closed", () => {
