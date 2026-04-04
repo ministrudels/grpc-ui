@@ -67,10 +67,10 @@
 .tabbar-status-success { background: var(--status-success); }
 .tabbar-status-error   { background: var(--status-error); }
 .tabbar-status-sending {
-  background: var(--status-sending);
-  animation: tabbar-pulse 1s ease-in-out infinite;
+  background: transparent;
+  border: 2px dashed var(--status-sending);
+  animation: tabbar-spin 1.2s linear infinite;
 }
-@keyframes tabbar-pulse {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.3; }
+@keyframes tabbar-spin {
+  to { transform: rotate(360deg); }
 }
