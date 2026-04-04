@@ -1,7 +1,28 @@
-import Editor, { type OnMount, useMonaco } from "@monaco-editor/react";
+import Editor, { type OnMount } from "@monaco-editor/react";
 import { useEffect, useRef, useState } from "react";
 import type * as monaco from "monaco-editor";
 import "./styles.css";
+
+const LINE_HEIGHT = 19; // px at fontSize 13
+const EDITOR_PADDING = 8; // top+bottom padding Monaco adds
+
+function editorOptions(): React.ComponentProps<typeof Editor>["options"] {
+  return {
+    readOnly: true,
+    minimap: { enabled: false },
+    lineNumbers: "on",
+    folding: false,
+    scrollBeyondLastLine: false,
+    wordWrap: "on",
+    fontSize: 13,
+    fontFamily: "monospace",
+    renderLineHighlight: "none",
+    overviewRulerLanes: 0,
+    hideCursorInOverviewRuler: true,
+    scrollbar: { verticalScrollbarSize: 6, horizontalScrollbarSize: 6 },
+    domReadOnly: true,
+  };
+}
 
 interface Props {
   response: unknown;
@@ -47,23 +68,22 @@ function formatTs(ts: number): string {
   return `${hh}:${mm}:${ss}.${ms}`;
 }
 
-function StreamMessage({ msg, ts }: { msg: unknown; ts?: number }) {
-  const monaco = useMonaco();
-  const [html, setHtml] = useState<string | null>(null);
+function StreamMessage({ msg, ts, monacoTheme }: { msg: unknown; ts?: number; monacoTheme: string }) {
   const json = JSON.stringify(msg, null, 2);
-
-  useEffect(() => {
-    if (!monaco) return;
-    monaco.editor.colorize(json, "json", {}).then(setHtml);
-  }, [monaco, json]);
+  const lineCount = json.split("\n").length;
+  const height = lineCount * LINE_HEIGHT + EDITOR_PADDING;
 
   return (
     <div className="stream-message">
       {ts !== undefined && <span className="stream-ts">{formatTs(ts)}</span>}
-      {html
-        ? <pre className="stream-json" dangerouslySetInnerHTML={{ __html: html }} />
-        : <pre className="stream-json">{json}</pre>
-      }
+      <div style={{ height }}>
+        <Editor
+          language="json"
+          theme={monacoTheme}
+          value={json}
+          options={{ ...editorOptions(), scrollbar: { vertical: "hidden", horizontal: "hidden" } }}
+        />
+      </div>
     </div>
   );
 }
@@ -99,7 +119,7 @@ export default function ResponsePanel({ response, streamTimestamps, error, error
       return (
         <div className="response-stream" ref={streamRef}>
           {messages.map((msg, i) => (
-            <StreamMessage key={i} msg={msg} ts={streamTimestamps[i]} />
+            <StreamMessage key={i} msg={msg} ts={streamTimestamps[i]} monacoTheme={monacoTheme} />
           ))}
           {!loading && error && (
             <div className="stream-message stream-message-error">
@@ -124,21 +144,7 @@ export default function ResponsePanel({ response, streamTimestamps, error, error
           theme={monacoTheme}
           value={text}
           onMount={handleMount}
-          options={{
-            readOnly: true,
-            minimap: { enabled: false },
-            lineNumbers: "off",
-            folding: false,
-            scrollBeyondLastLine: false,
-            wordWrap: "on",
-            fontSize: 13,
-            fontFamily: "monospace",
-            renderLineHighlight: "none",
-            overviewRulerLanes: 0,
-            hideCursorInOverviewRuler: true,
-            scrollbar: { verticalScrollbarSize: 6, horizontalScrollbarSize: 6 },
-            domReadOnly: true
-          }}
+          options={editorOptions()}
         />
       );
     }
@@ -147,13 +153,14 @@ export default function ResponsePanel({ response, streamTimestamps, error, error
   }
 
   const content = renderContent();
-  // Use plain .response-body for text content, .response-editor for Monaco
-  const isMonaco = !isStream && !error && !loading && response !== null && response !== undefined;
+  // .response-editor: flush, no padding — used for Monaco and stream panels
+  // .response-body: padded — used for loading, errors, and empty states
+  const useFlush = isStream || (!error && !loading && response !== null && response !== undefined);
 
   return (
     <div className="response-panel">
       <ResponseHeader copyText={copyText} streaming={streaming} />
-      <div className={isMonaco ? "response-editor" : "response-body"}>
+      <div className={useFlush ? "response-editor" : "response-body"}>
         {content}
       </div>
     </div>
