@@ -60,6 +60,7 @@
   padding: 8px 0;
 }
 .stream-message {
+  position: relative;
   padding: 6px 12px;
   border-bottom: 1px solid var(--stream-msg-border);
 }
@@ -71,12 +72,13 @@
   border-bottom: none;
 }
 .stream-ts {
-  display: block;
-  text-align: right;
+  position: absolute;
+  top: 6px;
+  right: 12px;
   color: var(--text-placeholder);
   font-family: monospace;
   font-size: 11px;
-  margin-bottom: 4px;
+  pointer-events: none;
 }
 .stream-json {
   margin: 0;
