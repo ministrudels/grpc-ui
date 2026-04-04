@@ -30,6 +30,7 @@ export type Tab = {
   response: unknown;
   streamTimestamps: number[];
   responseError: string | null;
+  responseErrorTs: number | null;
   sending: boolean;
   elapsed: number;
   status: TabStatus;
@@ -251,6 +252,7 @@ export default function App() {
       response: null,
       streamTimestamps: [],
       responseError: null,
+      responseErrorTs: null,
       sending: false,
       elapsed: 0,
       status: "idle"
@@ -335,6 +337,7 @@ export default function App() {
                 response={activeTab.response}
                 streamTimestamps={activeTab.streamTimestamps}
                 error={activeTab.responseError}
+                errorTs={activeTab.responseErrorTs}
                 loading={isPending}
                 monacoTheme={monacoTheme}
               />

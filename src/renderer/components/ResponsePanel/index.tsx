@@ -7,6 +7,7 @@ interface Props {
   response: unknown;
   streamTimestamps: number[];
   error: string | null;
+  errorTs: number | null;
   loading: boolean;
   monacoTheme: string;
 }
@@ -67,7 +68,7 @@ function StreamMessage({ msg, ts }: { msg: unknown; ts?: number }) {
   );
 }
 
-export default function ResponsePanel({ response, streamTimestamps, error, loading, monacoTheme }: Props) {
+export default function ResponsePanel({ response, streamTimestamps, error, errorTs, loading, monacoTheme }: Props) {
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const streamRef = useRef<HTMLDivElement | null>(null);
 
@@ -102,6 +103,7 @@ export default function ResponsePanel({ response, streamTimestamps, error, loadi
           ))}
           {!loading && error && (
             <div className="stream-message stream-message-error">
+              {errorTs && <span className="stream-ts">{formatTs(errorTs)}</span>}
               <span className="response-error">{error}</span>
             </div>
           )}

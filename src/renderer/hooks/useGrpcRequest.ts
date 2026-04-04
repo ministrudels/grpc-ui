@@ -41,7 +41,7 @@ export function useGrpcRequest(
     }
 
     const isStreaming = activeTab.method.serverStreaming;
-    updateTab(tabId, { sending: true, response: null, streamTimestamps: [], responseError: null, status: "sending" });
+    updateTab(tabId, { sending: true, response: null, streamTimestamps: [], responseError: null, responseErrorTs: null, status: "sending" });
 
     let unsubscribe: (() => void) | null = null;
     if (isStreaming) {
@@ -78,6 +78,7 @@ export function useGrpcRequest(
       const msg = (err as Error).message ?? "Request failed";
       updateTab(tabId, {
         responseError: msg.includes("Cancelled") ? "Request cancelled." : msg,
+        responseErrorTs: Date.now(),
         status: "error"
       });
     } finally {
