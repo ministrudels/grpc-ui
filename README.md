@@ -1,4 +1,9 @@
-# grpc-ui
+# gRPC UI
+
+[![Release](https://img.shields.io/github/v/release/ministrudels/grpc-ui)](https://github.com/ministrudels/grpc-ui/releases/latest)
+[![CI](https://img.shields.io/github/actions/workflow/status/ministrudels/grpc-ui/ci.yml?branch=main&label=CI)](https://github.com/ministrudels/grpc-ui/actions/workflows/ci.yml)
+[![License](https://img.shields.io/github/license/ministrudels/grpc-ui)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-blue)](#installation)
 
 A desktop gRPC client — built for developers who want Postman-level ergonomics for gRPC. No proto files, no config files, no plugins. Point it at a server and start sending requests.
 

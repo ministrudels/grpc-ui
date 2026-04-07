@@ -25,7 +25,7 @@
     "name": "Huan Min Gan",
     "email": "ganhuanmin@gmail.com"
   },
-  "license": "ISC",
+  "license": "MIT",
   "description": "gRPC UI client — like Insomnia/Postman for gRPC",
   "dependencies": {
     "@grpc/grpc-js": "^1.14.3",
