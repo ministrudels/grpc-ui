@@ -1,7 +1,7 @@
 {
   "name": "grpc-ui",
   "productName": "grpc-ui",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "main": "dist/main/main.js",
   "scripts": {
     "dev": "concurrently -k -n vite,electron \"vite\" \"wait-on tcp:5173 && tsc -p tsconfig.main.json && electron .\"",
@@ -15,7 +15,10 @@
     "dist:mac": "npm run build && electron-builder --mac --publish never",
     "dist:win": "npm run build && electron-builder --win --publish never",
     "dist:linux": "npm run build && electron-builder --linux --publish never",
-    "release": "npm run build && electron-builder --publish always"
+    "release": "npm run build && electron-builder --publish always",
+    "bump:patch": "npm version patch --no-git-tag-version",
+    "bump:minor": "npm version minor --no-git-tag-version",
+    "bump:major": "npm version major --no-git-tag-version"
   },
   "keywords": [],
   "author": "Huan Min Gan",
