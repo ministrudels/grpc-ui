@@ -36,12 +36,50 @@ Collections are saved to localStorage and restored on next launch. Resync any co
 
 ---
 
-## Prerequisites
+## Installation
 
-- Node.js
+### macOS (Homebrew — recommended)
+
+```sh
+brew tap ministrudels/tap
+brew install --cask grpc-ui
+```
+
+No Gatekeeper warnings, auto-updates with `brew upgrade`.
+
+### macOS (direct download)
+
+Download `gRPC-UI-<version>-arm64.dmg` (Apple Silicon) or `gRPC-UI-<version>-mac.dmg` (Intel) from the [latest release](https://github.com/ministrudels/grpc-ui/releases/latest).
+
+> **First launch:** right-click the app → **Open** → **Open** to approve it once. macOS will not ask again.
+
+### Windows
+
+Download `gRPC-UI-Setup-<version>.exe` from the [latest release](https://github.com/ministrudels/grpc-ui/releases/latest) and run the installer.
+
+### Linux
+
+**AppImage** (universal):
+```sh
+chmod +x gRPC-UI-<version>.AppImage
+./gRPC-UI-<version>.AppImage
+```
+
+**Debian / Ubuntu:**
+```sh
+sudo dpkg -i grpc-ui_<version>_amd64.deb
+```
+
+---
+
+## Contributing
+
+### Prerequisites
+
+- Node.js 20+
 - npm
 
-## Install
+### Setup
 
 ```bash
 npm install
