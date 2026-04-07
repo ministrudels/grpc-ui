@@ -84,12 +84,14 @@ jobs:
         env:
           TAP_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
         run: |
-          git clone https://x-access-token:$TAP_TOKEN@github.com/ministrudels/homebrew-tap.git
+          git clone https://github.com/ministrudels/homebrew-tap.git
           cd homebrew-tap
-          cat > Casks/grpc-ui.rb << EOF
+          git remote set-url origin https://x-access-token:${TAP_TOKEN}@github.com/ministrudels/homebrew-tap.git
+          mkdir -p Casks
+          cat > Casks/grpc-ui.rb << 'CASK'
           cask "grpc-ui" do
-            version "$VERSION"
-            sha256 "$SHA256"
+            version "VERSION_PLACEHOLDER"
+            sha256 "SHA256_PLACEHOLDER"
 
             url "https://github.com/ministrudels/grpc-ui/releases/download/v#{version}/gRPC-UI-#{version}-arm64.dmg",
                 verified: "github.com/ministrudels/grpc-ui/"
@@ -100,9 +102,11 @@ jobs:
 
             app "gRPC UI.app"
           end
-          EOF
+          CASK
+          sed -i "s/VERSION_PLACEHOLDER/${VERSION}/" Casks/grpc-ui.rb
+          sed -i "s/SHA256_PLACEHOLDER/${SHA256}/" Casks/grpc-ui.rb
           git config user.email "ganhuanmin@gmail.com"
           git config user.name "github-actions[bot]"
           git add Casks/grpc-ui.rb
-          git commit -m "Update grpc-ui to v$VERSION"
+          git commit -m "Update grpc-ui to v${VERSION}"
           git push
