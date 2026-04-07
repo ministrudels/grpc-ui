@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain, Menu, nativeImage } from "electron";
 import path from "path";
+import { autoUpdater } from "electron-updater";
 import { discoverServices, sendRequest, type SendRequestArgs } from "./grpc-client";
 
 function openSettings(): void {
@@ -82,6 +83,9 @@ ipcMain.on("grpc:cancel-request", (_event, requestId: string) => {
 app.whenReady().then(() => {
   buildMenu();
   createWindow();
+  if (app.isPackaged) {
+    autoUpdater.checkForUpdatesAndNotify();
+  }
   if (process.platform === "darwin" && app.dock) {
     app.dock.setIcon(
       nativeImage.createFromPath(

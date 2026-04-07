@@ -10,20 +10,60 @@
     "test": "vitest run",
     "dump-storage": "node scripts/dump-storage.js",
     "e2e": "npm run build && playwright test",
-    "e2e:ui": "npm run build && playwright test --ui"
+    "e2e:ui": "npm run build && playwright test --ui",
+    "dist": "npm run build && electron-builder --publish never",
+    "dist:mac": "npm run build && electron-builder --mac --publish never",
+    "dist:win": "npm run build && electron-builder --win --publish never",
+    "dist:linux": "npm run build && electron-builder --linux --publish never",
+    "release": "npm run build && electron-builder --publish always"
   },
   "keywords": [],
-  "author": "",
+  "author": "Huan Min Gan",
   "license": "ISC",
   "description": "gRPC UI client — like Insomnia/Postman for gRPC",
   "dependencies": {
     "@grpc/grpc-js": "^1.14.3",
     "@monaco-editor/react": "^4.7.0",
     "@tanstack/react-query": "^5.96.1",
+    "electron-updater": "^6.8.3",
     "protobufjs": "^8.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "vite-plugin-monaco-editor": "^1.1.0"
+  },
+  "build": {
+    "appId": "com.grpcui.app",
+    "productName": "gRPC UI",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "icon": "src/assets/icon.icns",
+      "target": [
+        { "target": "dmg", "arch": ["arm64", "x64"] },
+        { "target": "zip", "arch": ["arm64", "x64"] }
+      ]
+    },
+    "win": {
+      "icon": "src/assets/icon.ico",
+      "target": [{ "target": "nsis", "arch": ["x64"] }]
+    },
+    "linux": {
+      "icon": "src/assets/icon.png",
+      "target": [
+        { "target": "AppImage", "arch": ["x64"] },
+        { "target": "deb", "arch": ["x64"] }
+      ]
+    },
+    "publish": {
+      "provider": "github",
+      "releaseType": "release"
+    }
   },
   "devDependencies": {
     "@grpc/proto-loader": "^0.8.0",
@@ -38,6 +78,7 @@
     "classic-level": "^3.0.0",
     "concurrently": "^9.1.2",
     "electron": "^35.7.5",
+    "electron-builder": "^26.8.1",
     "jsdom": "^29.0.1",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.2",
