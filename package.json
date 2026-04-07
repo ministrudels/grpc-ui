@@ -21,7 +21,7 @@
     "bump:major": "npm version major --no-git-tag-version"
   },
   "keywords": [],
-  "author": "Huan Min Gan",
+  "author": { "name": "Huan Min Gan", "email": "ganhuanmin@gmail.com" },
   "license": "ISC",
   "description": "gRPC UI client — like Insomnia/Postman for gRPC",
   "dependencies": {
