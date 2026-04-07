@@ -1,7 +1,7 @@
 {
   "name": "grpc-ui",
   "productName": "grpc-ui",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "dist/main/main.js",
   "scripts": {
     "dev": "concurrently -k -n vite,electron \"vite\" \"wait-on tcp:5173 && tsc -p tsconfig.main.json && electron .\"",
@@ -21,7 +21,10 @@
     "bump:major": "npm version major --no-git-tag-version"
   },
   "keywords": [],
-  "author": { "name": "Huan Min Gan", "email": "ganhuanmin@gmail.com" },
+  "author": {
+    "name": "Huan Min Gan",
+    "email": "ganhuanmin@gmail.com"
+  },
   "license": "ISC",
   "description": "gRPC UI client — like Insomnia/Postman for gRPC",
   "dependencies": {
@@ -48,19 +51,48 @@
       "category": "public.app-category.developer-tools",
       "icon": "src/assets/icon.icns",
       "target": [
-        { "target": "dmg", "arch": ["arm64", "x64"] },
-        { "target": "zip", "arch": ["arm64", "x64"] }
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
       ]
     },
     "win": {
       "icon": "src/assets/icon.ico",
-      "target": [{ "target": "nsis", "arch": ["x64"] }]
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
     },
     "linux": {
       "icon": "src/assets/icon.png",
       "target": [
-        { "target": "AppImage", "arch": ["x64"] },
-        { "target": "deb", "arch": ["x64"] }
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        }
       ]
     },
     "publish": {
