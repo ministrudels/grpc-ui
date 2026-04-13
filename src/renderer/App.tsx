@@ -6,6 +6,7 @@ import RequestBody from "./components/RequestBody";
 import MetadataEditor, { type MetadataRow } from "./components/MetadataEditor";
 import ResponsePanel from "./components/ResponsePanel";
 import Snackbar from "./components/Snackbar";
+import UpdateBanner from "./components/UpdateBanner";
 import Settings from "./components/Settings";
 import type { GrpcMethod, GrpcService, NamedCollection } from "./global";
 import { skeletonFromMessage } from "./proto";
@@ -86,6 +87,7 @@ export default function App() {
   const snackbarTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [theme, setTheme] = useState<Theme>(loadTheme);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [updateReady, setUpdateReady] = useState(false);
   // Always holds the latest values so the single keydown listener never reads stale closure state
   const latestRef = useRef<{
     activeTab: Tab | null;
@@ -125,6 +127,10 @@ export default function App() {
 
   useEffect(() => {
     return window.grpcui.onOpenSettings(() => setSettingsOpen(true));
+  }, []);
+
+  useEffect(() => {
+    return window.grpcui.onUpdateReady(() => setUpdateReady(true));
   }, []);
 
   function handleThemeChange(next: Theme) {
@@ -285,6 +291,7 @@ export default function App() {
         tabStatuses={new Map(tabs.map((t) => [`${t.collectionUrl}|${t.service.name}|${t.method.name}`, t.status]))}
       />
       <div className="app-main">
+        {updateReady && <UpdateBanner onInstall={window.grpcui.installUpdate} />}
         <TabBar tabs={tabs} activeTabId={activeTabId} onSelect={setActiveTabId} onClose={handleCloseTab} />
         <div className="app-top-row">
           <AddressBar

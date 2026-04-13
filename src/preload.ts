@@ -22,4 +22,10 @@ contextBridge.exposeInMainWorld("grpcui", {
     ipcRenderer.on("grpc:open-settings", listener as Parameters<typeof ipcRenderer.on>[1]);
     return () => ipcRenderer.removeListener("grpc:open-settings", listener as Parameters<typeof ipcRenderer.removeListener>[1]);
   },
+  onUpdateReady: (cb: () => void) => {
+    const listener = () => cb();
+    ipcRenderer.on("grpcui:update-ready", listener as Parameters<typeof ipcRenderer.on>[1]);
+    return () => ipcRenderer.removeListener("grpcui:update-ready", listener as Parameters<typeof ipcRenderer.removeListener>[1]);
+  },
+  installUpdate: () => ipcRenderer.send("grpcui:install-update"),
 });

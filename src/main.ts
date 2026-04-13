@@ -80,11 +80,19 @@ ipcMain.on("grpc:cancel-request", (_event, requestId: string) => {
   requestAborts.delete(requestId);
 });
 
+ipcMain.on("grpcui:install-update", () => {
+  autoUpdater.quitAndInstall();
+});
+
 app.whenReady().then(() => {
   buildMenu();
   createWindow();
   if (app.isPackaged) {
-    autoUpdater.checkForUpdatesAndNotify();
+    autoUpdater.autoDownload = true;
+    autoUpdater.on("update-downloaded", () => {
+      BrowserWindow.getAllWindows().forEach((w) => w.webContents.send("grpcui:update-ready"));
+    });
+    autoUpdater.checkForUpdates().catch((err) => console.error("Update check failed:", err));
   }
   if (process.platform === "darwin" && app.dock) {
     app.dock.setIcon(
