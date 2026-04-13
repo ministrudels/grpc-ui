@@ -292,6 +292,7 @@ export default function App() {
             canSend={!!activeTab && !isPending}
             sending={isPending}
             elapsed={elapsed}
+            onUrlChange={(url) => activeTab && updateTab(activeTab.id, { collectionUrl: url })}
             onSend={send}
             onCancel={cancel}
           />

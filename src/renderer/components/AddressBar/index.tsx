@@ -5,6 +5,7 @@ interface Props {
   canSend: boolean;
   sending: boolean;
   elapsed: number;
+  onUrlChange: (url: string) => void;
   onSend: () => void;
   onCancel: () => void;
 }
@@ -15,11 +16,16 @@ function formatElapsed(seconds: number): string {
   return ` ${m}:${String(s).padStart(2, "0")}`;
 }
 
-export default function AddressBar({ url, canSend, sending, elapsed, onSend, onCancel }: Props) {
+export default function AddressBar({ url, canSend, sending, elapsed, onUrlChange, onSend, onCancel }: Props) {
   return (
     <div className="address-bar">
       <div className="address-row">
-        <input className="address-input" value={url} placeholder="Select a method from the sidebar" readOnly />
+        <input
+          className="address-input"
+          value={url}
+          placeholder="Select a method from the sidebar"
+          onChange={(e) => onUrlChange(e.target.value)}
+        />
         {sending ? (
           <button className="cancel-btn" onClick={onCancel}>Cancel</button>
         ) : (
