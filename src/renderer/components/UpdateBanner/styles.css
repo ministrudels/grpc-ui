@@ -1,0 +1,25 @@
+.update-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 6px 16px;
+  background: var(--accent-blue);
+  color: var(--text-on-accent);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.update-banner-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: var(--text-on-accent);
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.update-banner-btn:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
