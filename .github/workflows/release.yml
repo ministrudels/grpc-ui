@@ -31,8 +31,33 @@ jobs:
             echo "should_release=true" >> $GITHUB_OUTPUT
           fi
 
-  build:
+  create-release:
     needs: check
+    if: needs.check.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create GitHub release with changelog
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.check.outputs.version }}
+        run: |
+          PREV_TAG=$(git tag --sort=-version:refname | grep "^v" | head -1)
+          if [ -z "$PREV_TAG" ]; then
+            git log --pretty=format:"- %s" > notes.md
+          else
+            git log "${PREV_TAG}..HEAD" --pretty=format:"- %s" > notes.md
+          fi
+          gh release create "v${VERSION}" \
+            --repo ${{ github.repository }} \
+            --title "v${VERSION}" \
+            --notes-file notes.md
+
+  build:
+    needs: [check, create-release]
     if: needs.check.outputs.should_release == 'true'
     strategy:
       matrix:
