@@ -15,8 +15,6 @@ Built with Electron, React, and TypeScript.
 
 Point gRPC UI at any server with reflection enabled and it instantly discovers every service, method, and message type — no proto files, no manual imports. Reflection v1 and v1alpha are both supported with automatic fallback, so it works across all major frameworks (grpc-go, grpc-java, grpc-node, tonic, etc.).
 
----
-
 ## Installation
 
 ### macOS (Homebrew — recommended)
@@ -50,8 +48,6 @@ chmod +x gRPC-UI-<version>.AppImage
 ```sh
 sudo dpkg -i grpc-ui_<version>_amd64.deb
 ```
-
----
 
 ## Contributing
 
