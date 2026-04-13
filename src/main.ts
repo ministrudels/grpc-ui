@@ -87,7 +87,7 @@ ipcMain.on("grpcui:install-update", () => {
 app.whenReady().then(() => {
   buildMenu();
   createWindow();
-  if (app.isPackaged) {
+if (app.isPackaged) {
     autoUpdater.autoDownload = true;
     autoUpdater.on("update-downloaded", () => {
       BrowserWindow.getAllWindows().forEach((w) => w.webContents.send("grpcui:update-ready"));

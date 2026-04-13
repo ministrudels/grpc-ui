@@ -282,7 +282,9 @@ export default function App() {
   const monacoTheme = theme === "light" ? "vs" : "vs-dark";
 
   return (
-    <div className="app">
+    <div className="app-root">
+      {updateReady && <UpdateBanner onInstall={window.grpcui.installUpdate} />}
+      <div className="app">
       <Sidebar
         collections={collections}
         onCollectionsChange={handleCollectionsChange}
@@ -291,7 +293,6 @@ export default function App() {
         tabStatuses={new Map(tabs.map((t) => [`${t.collectionUrl}|${t.service.name}|${t.method.name}`, t.status]))}
       />
       <div className="app-main">
-        {updateReady && <UpdateBanner onInstall={window.grpcui.installUpdate} />}
         <TabBar tabs={tabs} activeTabId={activeTabId} onSelect={setActiveTabId} onClose={handleCloseTab} />
         <div className="app-top-row">
           <AddressBar
@@ -359,6 +360,7 @@ export default function App() {
       {settingsOpen && (
         <Settings theme={theme} onThemeChange={handleThemeChange} onClose={() => setSettingsOpen(false)} />
       )}
+    </div>
     </div>
   );
 }

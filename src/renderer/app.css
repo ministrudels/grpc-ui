@@ -1,8 +1,14 @@
-.app {
+.app-root {
   display: flex;
+  flex-direction: column;
   height: 100vh;
   background: var(--bg-base);
   color: var(--text-primary);
+}
+.app {
+  display: flex;
+  flex: 1;
+  min-height: 0;
 }
 .app-main {
   flex: 1;
