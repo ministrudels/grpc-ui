@@ -16,9 +16,9 @@
     "dist:win": "npm run build && electron-builder --win --publish never",
     "dist:linux": "npm run build && electron-builder --linux --publish never",
     "release": "npm run build && electron-builder --publish always",
-    "bump:patch": "npm version patch --no-git-tag-version && git add package.json && git commit -m \"chore: bump version to $(node -p \"require('./package.json').version\")\"",
-    "bump:minor": "npm version minor --no-git-tag-version && git add package.json && git commit -m \"chore: bump version to $(node -p \"require('./package.json').version\")\"",
-    "bump:major": "npm version major --no-git-tag-version && git add package.json && git commit -m \"chore: bump version to $(node -p \"require('./package.json').version\")\""
+    "bump:patch": "npm version patch --no-git-tag-version && git add package.json package-lock.json && git commit -m \"chore: bump version to $(node -p \"require('./package.json').version\")\"",
+    "bump:minor": "npm version minor --no-git-tag-version && git add package.json package-lock.json && git commit -m \"chore: bump version to $(node -p \"require('./package.json').version\")\"",
+    "bump:major": "npm version major --no-git-tag-version && git add package.json package-lock.json && git commit -m \"chore: bump version to $(node -p \"require('./package.json').version\")\""
   },
   "keywords": [],
   "author": {
