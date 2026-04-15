@@ -8,7 +8,6 @@ import "./styles.css";
 interface Props {
   value: string;
   onChange: (value: string) => void;
-  onSend: () => void;
   requestType?: string;
   messages?: GrpcMessage[];
   monacoTheme: string;
@@ -28,13 +27,15 @@ function applySchema(monaco: any, requestType: string | undefined, messages: Grp
   });
 }
 
-export default function RequestBody({ value, onChange, onSend, requestType, messages = [], monacoTheme }: Props) {
+export default function RequestBody({ value, onChange, requestType, messages = [], monacoTheme }: Props) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const monacoRef = useRef<any>(null);
 
   const handleMount: OnMount = (editor, monaco) => {
     monacoRef.current = monaco;
-    editor.addCommand(KeyMod.CtrlCmd | KeyCode.Enter, onSend);
+    editor.addCommand(KeyMod.CtrlCmd | KeyCode.Enter, () => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", metaKey: true, ctrlKey: true, bubbles: true }));
+    });
     applySchema(monaco, requestType, messages);
   };
 

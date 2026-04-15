@@ -325,7 +325,6 @@ export default function App() {
                   <RequestBody
                     value={activeTab.requestBody}
                     onChange={(v) => updateTab(activeTab.id, { requestBody: v })}
-                    onSend={send}
                     requestType={activeTab.method.requestType}
                     messages={collections.find((c) => c.url === activeTab.collectionUrl)?.messages}
                     monacoTheme={monacoTheme}
