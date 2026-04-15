@@ -22,6 +22,7 @@ export type TabStatus = "idle" | "sending" | "success" | "error";
 export type Tab = {
   id: string;
   collectionUrl: string;
+  targetUrl: string;
   service: GrpcService;
   method: GrpcMethod;
   requestBody: string;
@@ -244,6 +245,7 @@ export default function App() {
     const tab: Tab = {
       id: newTabId(),
       collectionUrl,
+      targetUrl: collectionUrl,
       service,
       method,
       requestBody: JSON.stringify(skeleton, null, 2),
@@ -289,11 +291,11 @@ export default function App() {
         <TabBar tabs={tabs} activeTabId={activeTabId} onSelect={setActiveTabId} onClose={handleCloseTab} />
         <div className="app-top-row">
           <AddressBar
-            url={activeTab?.collectionUrl ?? ""}
+            url={activeTab?.targetUrl ?? ""}
             canSend={!!activeTab && !isPending}
             sending={isPending}
             elapsed={elapsed}
-            onUrlChange={(url) => activeTab && updateTab(activeTab.id, { collectionUrl: url })}
+            onUrlChange={(url) => activeTab && updateTab(activeTab.id, { targetUrl: url })}
             onSend={send}
             onCancel={cancel}
           />

@@ -61,7 +61,7 @@ export function useGrpcRequest(
     try {
       const res = await window.grpcui.sendRequest(
         {
-          url: activeTab.collectionUrl,
+          url: activeTab.targetUrl,
           serviceName: activeTab.service.name,
           methodName: activeTab.method.name,
           requestType: activeTab.method.requestType,
