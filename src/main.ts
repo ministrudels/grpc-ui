@@ -1,6 +1,5 @@
 import { app, BrowserWindow, ipcMain, Menu, nativeImage } from "electron";
 import path from "path";
-import { autoUpdater } from "electron-updater";
 import { discoverServices, sendRequest, type SendRequestArgs } from "./grpc-client";
 
 function openSettings(): void {
@@ -80,20 +79,9 @@ ipcMain.on("grpc:cancel-request", (_event, requestId: string) => {
   requestAborts.delete(requestId);
 });
 
-ipcMain.on("grpcui:install-update", () => {
-  autoUpdater.quitAndInstall();
-});
-
 app.whenReady().then(() => {
   buildMenu();
   createWindow();
-if (app.isPackaged) {
-    autoUpdater.autoDownload = true;
-    autoUpdater.on("update-downloaded", () => {
-      BrowserWindow.getAllWindows().forEach((w) => w.webContents.send("grpcui:update-ready"));
-    });
-    autoUpdater.checkForUpdates().catch((err) => console.error("Update check failed:", err));
-  }
   if (process.platform === "darwin" && app.dock) {
     app.dock.setIcon(
       nativeImage.createFromPath(

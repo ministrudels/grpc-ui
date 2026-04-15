@@ -63,8 +63,6 @@ declare global {
       onReflectProgress: (cb: (progress: ReflectProgress) => void) => () => void;
       onStreamData: (cb: (payload: { requestId: string; data: unknown }) => void) => () => void;
       onOpenSettings: (cb: () => void) => () => void;
-      onUpdateReady: (cb: () => void) => () => void;
-      installUpdate: () => void;
     };
   }
 }
