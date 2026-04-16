@@ -50,6 +50,7 @@ function formatTs(ts: number): string {
 function StreamMessage({ msg, ts }: { msg: unknown; ts?: number }) {
   const monaco = useMonaco();
   const [html, setHtml] = useState<string | null>(null);
+  const [collapsed, setCollapsed] = useState(false);
   const json = JSON.stringify(msg, null, 2);
 
   useEffect(() => {
@@ -59,11 +60,18 @@ function StreamMessage({ msg, ts }: { msg: unknown; ts?: number }) {
 
   return (
     <div className="stream-message">
+      <button
+        className={`stream-collapse-btn${collapsed ? " stream-collapse-btn--collapsed" : ""}`}
+        onClick={() => setCollapsed(c => !c)}
+        title={collapsed ? "Expand" : "Collapse"}
+      >
+        ▶
+      </button>
       {ts !== undefined && <span className="stream-ts">{formatTs(ts)}</span>}
-      {html
+      {!collapsed && (html
         ? <pre className="stream-json" dangerouslySetInnerHTML={{ __html: html }} />
         : <pre className="stream-json">{json}</pre>
-      }
+      )}
     </div>
   );
 }
@@ -128,7 +136,9 @@ export default function ResponsePanel({ response, streamTimestamps, error, error
             readOnly: true,
             minimap: { enabled: false },
             lineNumbers: "off",
-            folding: false,
+            folding: true,
+            foldingHighlight: false,
+            showFoldingControls: "always",
             scrollBeyondLastLine: false,
             wordWrap: "on",
             fontSize: 13,
