@@ -337,6 +337,7 @@ export default function App() {
                 )}
               </div>
               <ResponsePanel
+                tabId={activeTab.id}
                 response={activeTab.response}
                 streamTimestamps={activeTab.streamTimestamps}
                 error={activeTab.responseError}

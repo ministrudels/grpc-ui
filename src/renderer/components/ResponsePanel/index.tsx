@@ -4,6 +4,7 @@ import type * as monaco from "monaco-editor";
 import "./styles.css";
 
 interface Props {
+  tabId: string;
   response: unknown;
   streamTimestamps: number[];
   error: string | null;
@@ -76,7 +77,7 @@ function StreamMessage({ msg, ts }: { msg: unknown; ts?: number }) {
   );
 }
 
-export default function ResponsePanel({ response, streamTimestamps, error, errorTs, loading, monacoTheme }: Props) {
+export default function ResponsePanel({ tabId, response, streamTimestamps, error, errorTs, loading, monacoTheme }: Props) {
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const streamRef = useRef<HTMLDivElement | null>(null);
 
@@ -88,6 +89,14 @@ export default function ResponsePanel({ response, streamTimestamps, error, error
     if (!loading || !streamRef.current) return;
     streamRef.current.scrollTop = streamRef.current.scrollHeight;
   }, [messages.length, loading]);
+
+  // Jump to the latest message whenever the visible tab changes, so
+  // switching back to a long-running or finished stream shows the most
+  // recent response instead of wherever the scroll happened to be left.
+  useEffect(() => {
+    if (!streamRef.current) return;
+    streamRef.current.scrollTop = streamRef.current.scrollHeight;
+  }, [tabId]);
 
   const handleMount: OnMount = (editor) => {
     editorRef.current = editor;
