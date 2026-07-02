@@ -33,7 +33,7 @@ export type Tab = {
   responseError: string | null;
   responseErrorTs: number | null;
   sending: boolean;
-  elapsed: number;
+  sendStartedAt: number | null;
   status: TabStatus;
 };
 
@@ -256,7 +256,7 @@ export default function App() {
       responseError: null,
       responseErrorTs: null,
       sending: false,
-      elapsed: 0,
+      sendStartedAt: null,
       status: "idle"
     };
     setTabs((prev) => [...prev, tab]);

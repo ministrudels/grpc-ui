@@ -43,7 +43,7 @@ function makeTab(id: string, methodName: string, sending = false): Tab {
     streamTimestamps: [],
     responseError: null,
     sending,
-    elapsed: 0,
+    sendStartedAt: null,
     status: "idle",
   };
 }

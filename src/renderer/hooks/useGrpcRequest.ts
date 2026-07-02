@@ -19,17 +19,21 @@ export function useGrpcRequest(
 ): UseGrpcRequestReturn {
   const [elapsed, setElapsed] = useState(0);
 
-  // Elapsed timer — per-tab, resets when the active tab changes or stops sending
+  // Elapsed timer — counts from the request's actual start time (persisted on
+  // the tab), so it keeps counting correctly even if the user navigates away
+  // and back instead of resetting to 0.
   const tabSending = activeTab?.sending ?? false;
+  const sendStartedAt = activeTab?.sendStartedAt ?? null;
   useEffect(() => {
-    if (!tabSending) {
+    if (!tabSending || sendStartedAt == null) {
       setElapsed(0);
       return;
     }
-    const start = Date.now();
-    const id = setInterval(() => setElapsed(Math.floor((Date.now() - start) / 1000)), 250);
+    const tick = (): void => setElapsed(Math.floor((Date.now() - sendStartedAt) / 1000));
+    tick();
+    const id = setInterval(tick, 250);
     return () => clearInterval(id);
-  }, [tabSending, activeTab?.id]);
+  }, [tabSending, sendStartedAt]);
 
   async function send(): Promise<void> {
     if (!activeTab || activeTab.sending) return;
@@ -41,7 +45,15 @@ export function useGrpcRequest(
     }
 
     const isStreaming = activeTab.method.serverStreaming;
-    updateTab(tabId, { sending: true, response: null, streamTimestamps: [], responseError: null, responseErrorTs: null, status: "sending" });
+    updateTab(tabId, {
+      sending: true,
+      sendStartedAt: Date.now(),
+      response: null,
+      streamTimestamps: [],
+      responseError: null,
+      responseErrorTs: null,
+      status: "sending"
+    });
 
     let unsubscribe: (() => void) | null = null;
     if (isStreaming) {
