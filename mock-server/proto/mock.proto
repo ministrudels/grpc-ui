@@ -1,0 +1,107 @@
+syntax = "proto3";
+
+package mock.shop;
+
+service ProductCatalog {
+  rpc GetProduct (GetProductRequest) returns (Product);
+  rpc CreateProduct (CreateProductRequest) returns (Product);
+  rpc ListProducts (ListProductsRequest) returns (ListProductsResponse);
+  rpc WatchProductUpdates (WatchProductUpdatesRequest) returns (stream ProductUpdate);
+}
+
+service OrderService {
+  rpc GetOrder (GetOrderRequest) returns (Order);
+  rpc CreateOrder (CreateOrderRequest) returns (Order);
+  rpc ListOrders (ListOrdersRequest) returns (ListOrdersResponse);
+  rpc WatchOrderUpdates (WatchOrderUpdatesRequest) returns (stream OrderUpdate);
+}
+
+message GetProductRequest {
+  string id = 1;
+}
+
+message CreateProductRequest {
+  string name = 1;
+  string category = 2;
+  double price = 3;
+  int32 stock = 4;
+}
+
+message ListProductsRequest {
+  string category_filter = 1;
+  int32 page_size = 2;
+}
+
+message ListProductsResponse {
+  repeated Product products = 1;
+  string next_page_token = 2;
+}
+
+message WatchProductUpdatesRequest {
+  string category_filter = 1;
+  int32 interval_ms = 2;
+  int32 count = 3;
+}
+
+message Product {
+  string id = 1;
+  string name = 2;
+  string category = 3;
+  double price = 4;
+  int32 stock = 5;
+  bool available = 6;
+}
+
+message ProductUpdate {
+  string update_id = 1;
+  string type = 2;
+  Product product = 3;
+  int32 sequence = 4;
+  string message = 5;
+}
+
+message GetOrderRequest {
+  string id = 1;
+}
+
+message CreateOrderRequest {
+  string customer_name = 1;
+  repeated OrderItem items = 2;
+}
+
+message ListOrdersRequest {
+  string status_filter = 1;
+}
+
+message ListOrdersResponse {
+  repeated Order orders = 1;
+}
+
+message WatchOrderUpdatesRequest {
+  string order_id = 1;
+  int32 interval_ms = 2;
+  int32 count = 3;
+}
+
+message Order {
+  string id = 1;
+  string customer_name = 2;
+  repeated OrderItem items = 3;
+  string status = 4;
+  double total = 5;
+}
+
+message OrderItem {
+  string product_id = 1;
+  string product_name = 2;
+  int32 quantity = 3;
+  double unit_price = 4;
+}
+
+message OrderUpdate {
+  string update_id = 1;
+  string order_id = 2;
+  string status = 3;
+  int32 sequence = 4;
+  string message = 5;
+}
