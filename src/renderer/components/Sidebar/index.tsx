@@ -4,6 +4,7 @@ import Collection from "../Collection";
 import type { GrpcMessage, GrpcMethod, GrpcService, ReflectProgress } from "../../global";
 import type { NamedCollection } from "../../global";
 import type { SelectedMethod, TabStatus } from "../../App";
+import { formatShortcutWithAlternate, isMacPlatform, shortcutById } from "../../../shortcuts";
 import "./styles.css";
 
 export type OnSelectMethod = (
@@ -36,6 +37,8 @@ export default function Sidebar({ collections, onCollectionsChange, selectedMeth
   const [progress, setProgress] = useState<ReflectProgress | null>(null);
   const [query, setQuery] = useState("");
   const searchRef = useRef<HTMLInputElement | null>(null);
+  const isMac = isMacPlatform(window.navigator.platform);
+  const searchShortcut = formatShortcutWithAlternate(shortcutById("searchMethods"), isMac);
 
   const busy = loading || resyncing > 0;
 
@@ -46,7 +49,9 @@ export default function Sidebar({ collections, onCollectionsChange, selectedMeth
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key !== "/" && !(e.key === "k" && e.metaKey)) return;
+      const cmd = e.metaKey || e.ctrlKey;
+      if (e.key === "/" && cmd) return;
+      if (e.key !== "/" && !(e.key === "k" && cmd)) return;
       const target = e.target as HTMLElement;
       if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) return;
       e.preventDefault();
@@ -123,7 +128,7 @@ export default function Sidebar({ collections, onCollectionsChange, selectedMeth
         <input
           ref={searchRef}
           className="sidebar-search"
-          placeholder="Search methods… (⌘K)"
+          placeholder={`Search methods... (${searchShortcut})`}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Escape") { setQuery(""); e.currentTarget.blur(); } }}

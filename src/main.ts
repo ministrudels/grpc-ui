@@ -6,6 +6,10 @@ function openSettings(): void {
   BrowserWindow.getFocusedWindow()?.webContents.send("grpc:open-settings");
 }
 
+function openKeyboardShortcuts(): void {
+  BrowserWindow.getFocusedWindow()?.webContents.send("grpc:open-keyboard-shortcuts");
+}
+
 function buildMenu(): void {
   const template: Electron.MenuItemConstructorOptions[] = [
     {
@@ -31,7 +35,17 @@ function buildMenu(): void {
     },
     { role: "editMenu" as const },
     { role: "viewMenu" as const },
-    { role: "windowMenu" as const }
+    { role: "windowMenu" as const },
+    {
+      role: "help",
+      submenu: [
+        {
+          label: "Keyboard Shortcuts",
+          accelerator: "CmdOrCtrl+/",
+          click: openKeyboardShortcuts
+        }
+      ]
+    }
   ];
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }

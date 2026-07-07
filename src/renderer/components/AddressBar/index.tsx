@@ -1,3 +1,4 @@
+import { formatShortcut, shortcutById } from "../../../shortcuts";
 import "./styles.css";
 
 interface Props {
@@ -5,6 +6,7 @@ interface Props {
   canSend: boolean;
   sending: boolean;
   elapsed: number;
+  isMac: boolean;
   onUrlChange: (url: string) => void;
   onSend: () => void;
   onCancel: () => void;
@@ -16,7 +18,10 @@ function formatElapsed(seconds: number): string {
   return ` ${m}:${String(s).padStart(2, "0")}`;
 }
 
-export default function AddressBar({ url, canSend, sending, elapsed, onUrlChange, onSend, onCancel }: Props) {
+export default function AddressBar({ url, canSend, sending, elapsed, isMac, onUrlChange, onSend, onCancel }: Props) {
+  const sendShortcut = formatShortcut(shortcutById("sendRequest"), isMac);
+  const cancelShortcut = formatShortcut(shortcutById("cancelRequest"), isMac);
+
   return (
     <div className="address-bar">
       <div className="address-row">
@@ -27,9 +32,15 @@ export default function AddressBar({ url, canSend, sending, elapsed, onUrlChange
           onChange={(e) => onUrlChange(e.target.value)}
         />
         {sending ? (
-          <button className="cancel-btn" onClick={onCancel}>Cancel</button>
+          <button className="cancel-btn" onClick={onCancel} title={`Cancel request (${cancelShortcut})`}>
+            Cancel
+            <span className="button-shortcut">{cancelShortcut}</span>
+          </button>
         ) : (
-          <button className="send-btn" disabled={!canSend} onClick={onSend}>Send</button>
+          <button className="send-btn" disabled={!canSend} onClick={onSend} title={`Send request (${sendShortcut})`}>
+            Send
+            <span className="button-shortcut">{sendShortcut}</span>
+          </button>
         )}
       </div>
       <span className="address-timer">{sending ? formatElapsed(elapsed) : "\u00a0"}</span>
