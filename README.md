@@ -9,7 +9,9 @@ A desktop gRPC client — built for developers who want Postman-level ergonomics
 
 Built with Electron, React, and TypeScript.
 
-<!-- TODO: Add screenshot or demo GIF here -->
+<p align="center">
+  <img src="docs/assets/grpc-ui-screenshot.png" alt="gRPC UI desktop app showing discovered ProductCatalog and OrderService methods with a request editor" width="100%">
+</p>
 
 ## Zero-config schema discovery
 
