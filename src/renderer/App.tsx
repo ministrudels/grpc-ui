@@ -11,6 +11,7 @@ import type { GrpcMethod, GrpcService, NamedCollection } from "./global";
 import { skeletonFromMessage } from "./proto";
 import type { OnSelectMethod } from "./components/Sidebar";
 import { useGrpcRequest } from "./hooks/useGrpcRequest";
+import { isMacPlatform } from "../shortcuts";
 import "./app.css";
 
 export type { NamedCollection };
@@ -91,6 +92,7 @@ export default function App() {
   const snackbarTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [theme, setTheme] = useState<Theme>(loadTheme);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const isMac = isMacPlatform(window.navigator.platform);
   // Always holds the latest values so the single keydown listener never reads stale closure state
   const latestRef = useRef<{
     activeTab: Tab | null;
@@ -294,13 +296,14 @@ export default function App() {
         tabStatuses={new Map(tabs.map((t) => [`${t.collectionUrl}|${t.service.name}|${t.method.name}`, t.status]))}
       />
       <div className="app-main">
-        <TabBar tabs={tabs} activeTabId={activeTabId} onSelect={setActiveTabId} onClose={handleCloseTab} />
+        <TabBar tabs={tabs} activeTabId={activeTabId} isMac={isMac} onSelect={setActiveTabId} onClose={handleCloseTab} />
         <div className="app-top-row">
           <AddressBar
             url={activeTab?.targetUrl ?? ""}
             canSend={!!activeTab && !isPending}
             sending={isPending}
             elapsed={elapsed}
+            isMac={isMac}
             onUrlChange={(url) => activeTab && updateTab(activeTab.id, { targetUrl: url })}
             onSend={send}
             onCancel={cancel}
