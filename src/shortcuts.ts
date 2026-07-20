@@ -112,7 +112,11 @@ export function shortcutById(id: ShortcutId): ShortcutDefinition {
 }
 
 export function formatShortcut(shortcut: ShortcutDefinition, isMac: boolean): string {
-  return isMac ? shortcut.mac : shortcut.other;
+  return isMac
+    ? shortcut.mac
+        .replace(/\bCmd\b/g, "⌘")
+        .replace(/\bEnter\b/g, "↩")
+    : shortcut.other;
 }
 
 export function formatShortcutWithAlternate(shortcut: ShortcutDefinition, isMac: boolean): string {
