@@ -52,6 +52,8 @@ export function useGrpcRequest(
       streamTimestamps: [],
       responseError: null,
       responseErrorTs: null,
+      statusCode: null,
+      statusName: null,
       status: "sending"
     });
 
@@ -85,8 +87,26 @@ export function useGrpcRequest(
         },
         tabId
       );
-      updateTab(tabId, { response: res, status: "success" });
+      if (res.ok) {
+        updateTab(tabId, {
+          response: res.payload,
+          statusCode: res.code,
+          statusName: res.codeName,
+          status: "success"
+        });
+      } else {
+        const msg = res.error ?? "Request failed";
+        updateTab(tabId, {
+          responseError: msg.includes("Cancelled") ? "Request cancelled." : msg,
+          responseErrorTs: Date.now(),
+          statusCode: res.code,
+          statusName: res.codeName,
+          status: "error"
+        });
+      }
     } catch (err: unknown) {
+      // sendRequest resolves rather than rejects for gRPC outcomes; this only
+      // fires on an unexpected IPC failure.
       const msg = (err as Error).message ?? "Request failed";
       updateTab(tabId, {
         responseError: msg.includes("Cancelled") ? "Request cancelled." : msg,
