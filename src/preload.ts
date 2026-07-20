@@ -22,9 +22,4 @@ contextBridge.exposeInMainWorld("grpcui", {
     ipcRenderer.on("grpc:open-settings", listener as Parameters<typeof ipcRenderer.on>[1]);
     return () => ipcRenderer.removeListener("grpc:open-settings", listener as Parameters<typeof ipcRenderer.removeListener>[1]);
   },
-  onOpenKeyboardShortcuts: (cb: () => void) => {
-    const listener = () => cb();
-    ipcRenderer.on("grpc:open-keyboard-shortcuts", listener as Parameters<typeof ipcRenderer.on>[1]);
-    return () => ipcRenderer.removeListener("grpc:open-keyboard-shortcuts", listener as Parameters<typeof ipcRenderer.removeListener>[1]);
-  },
 });

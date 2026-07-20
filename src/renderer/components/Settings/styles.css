@@ -1,5 +1,7 @@
 .settings-dialog {
-  width: 360px;
+  width: min(600px, calc(100vw - 32px));
+  max-height: min(720px, calc(100vh - 48px));
+  overflow: auto;
 }
 .settings-header {
   display: flex;
@@ -22,6 +24,10 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+.settings-section + .settings-section {
+  border-top: 1px solid var(--border);
+  padding-top: 18px;
 }
 .settings-section-title {
   color: var(--text-secondary);
@@ -54,4 +60,62 @@
 }
 .settings-theme-btn:not(.active):hover {
   background: var(--bg-hover);
+}
+.settings-shortcuts-sections {
+  display: grid;
+  gap: 18px;
+}
+.settings-shortcuts-section {
+  display: grid;
+  gap: 8px;
+}
+.settings-shortcuts-title {
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.settings-shortcuts-list {
+  display: grid;
+  gap: 2px;
+}
+.settings-shortcuts-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  min-height: 32px;
+}
+.settings-shortcuts-row dt {
+  color: var(--text-primary);
+  font-size: 13px;
+  min-width: 0;
+}
+.settings-shortcuts-row dd {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  min-width: 0;
+}
+.settings-shortcuts-key-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.settings-shortcuts-or {
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+.settings-shortcuts-row kbd {
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 11px;
+  line-height: 1;
+  padding: 5px 7px;
+  white-space: nowrap;
 }

@@ -3,7 +3,6 @@ export type ShortcutId =
   | "cancelRequest"
   | "searchMethods"
   | "openSettings"
-  | "openShortcuts"
   | "closeTab"
   | "nextTab"
   | "previousTab"
@@ -81,13 +80,6 @@ export const SHORTCUTS: ShortcutDefinition[] = [
     action: "Open settings",
     mac: "Cmd+,",
     other: "Ctrl+,"
-  },
-  {
-    id: "openShortcuts",
-    section: "App",
-    action: "Show keyboard shortcuts",
-    mac: "Cmd+/",
-    other: "Ctrl+/"
   },
   {
     id: "submitDialog",

@@ -7,7 +7,6 @@ import MetadataEditor, { type MetadataRow } from "./components/MetadataEditor";
 import ResponsePanel from "./components/ResponsePanel";
 import Snackbar from "./components/Snackbar";
 import Settings from "./components/Settings";
-import KeyboardShortcuts from "./components/KeyboardShortcuts";
 import type { GrpcMethod, GrpcService, NamedCollection } from "./global";
 import { skeletonFromMessage } from "./proto";
 import type { OnSelectMethod } from "./components/Sidebar";
@@ -93,7 +92,6 @@ export default function App() {
   const snackbarTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [theme, setTheme] = useState<Theme>(loadTheme);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const isMac = isMacPlatform(window.navigator.platform);
   // Always holds the latest values so the single keydown listener never reads stale closure state
   const latestRef = useRef<{
@@ -108,8 +106,6 @@ export default function App() {
     showSnackbar: (m: string) => void;
     settingsOpen: boolean;
     setSettingsOpen: (v: boolean) => void;
-    shortcutsOpen: boolean;
-    setShortcutsOpen: (v: boolean) => void;
   }>({
     activeTab: null,
     tabs: [],
@@ -121,9 +117,7 @@ export default function App() {
     isPending: false,
     showSnackbar: () => {},
     settingsOpen: false,
-    setSettingsOpen: () => {},
-    shortcutsOpen: false,
-    setShortcutsOpen: () => {}
+    setSettingsOpen: () => {}
   });
 
   const activeTab = tabs.find((t) => t.id === activeTabId) ?? null;
@@ -138,10 +132,6 @@ export default function App() {
 
   useEffect(() => {
     return window.grpcui.onOpenSettings(() => setSettingsOpen(true));
-  }, []);
-
-  useEffect(() => {
-    return window.grpcui.onOpenKeyboardShortcuts(() => setShortcutsOpen(true));
   }, []);
 
   function handleThemeChange(next: Theme) {
@@ -178,8 +168,6 @@ export default function App() {
   latestRef.current.showSnackbar = showSnackbar;
   latestRef.current.settingsOpen = settingsOpen;
   latestRef.current.setSettingsOpen = setSettingsOpen;
-  latestRef.current.shortcutsOpen = shortcutsOpen;
-  latestRef.current.setShortcutsOpen = setShortcutsOpen;
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -194,9 +182,7 @@ export default function App() {
         isPending: pending,
         showSnackbar: snack,
         settingsOpen: isSettingsOpen,
-        setSettingsOpen: openSettings,
-        shortcutsOpen: isShortcutsOpen,
-        setShortcutsOpen: openShortcuts
+        setSettingsOpen: openSettings
       } = latestRef.current;
 
       const cmd = e.metaKey || e.ctrlKey;
@@ -207,14 +193,7 @@ export default function App() {
         return;
       }
 
-      if (e.key === "/" && cmd) {
-        e.preventDefault();
-        openShortcuts(true);
-        return;
-      }
-
       if (e.key === "Escape") {
-        if (isShortcutsOpen) { openShortcuts(false); return; }
         if (isSettingsOpen) { openSettings(false); return; }
         if (pending) { doCancel(); return; }
         return;
@@ -386,9 +365,6 @@ export default function App() {
       <Snackbar message={snackbar.message} visible={snackbar.visible} />
       {settingsOpen && (
         <Settings theme={theme} onThemeChange={handleThemeChange} onClose={() => setSettingsOpen(false)} />
-      )}
-      {shortcutsOpen && (
-        <KeyboardShortcuts onClose={() => setShortcutsOpen(false)} />
       )}
     </div>
     </div>
