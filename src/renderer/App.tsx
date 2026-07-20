@@ -32,6 +32,10 @@ export type Tab = {
   streamTimestamps: number[];
   responseError: string | null;
   responseErrorTs: number | null;
+  /** gRPC status code of the last completed request (0 = OK), or null if none/in-flight. */
+  statusCode: number | null;
+  /** Human-readable name for statusCode, e.g. "OK", "NOT_FOUND". */
+  statusName: string | null;
   sending: boolean;
   sendStartedAt: number | null;
   status: TabStatus;
@@ -255,6 +259,8 @@ export default function App() {
       streamTimestamps: [],
       responseError: null,
       responseErrorTs: null,
+      statusCode: null,
+      statusName: null,
       sending: false,
       sendStartedAt: null,
       status: "idle"
@@ -342,6 +348,8 @@ export default function App() {
                 streamTimestamps={activeTab.streamTimestamps}
                 error={activeTab.responseError}
                 errorTs={activeTab.responseErrorTs}
+                statusCode={activeTab.statusCode}
+                statusName={activeTab.statusName}
                 loading={isPending}
                 monacoTheme={monacoTheme}
               />

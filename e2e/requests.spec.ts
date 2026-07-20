@@ -26,6 +26,8 @@ test.describe("requests", () => {
 
     await expect(window.locator(".response-editor")).toBeVisible({ timeout: 10_000 });
     await expect(window.locator(".response-error")).not.toBeVisible();
+    // gRPC status code is shown for successful responses
+    await expect(window.locator(".status-code--ok")).toHaveText("0 OK");
   });
 
   test("successful response contains expected JSON", async ({ window, grpcServer }) => {
@@ -35,6 +37,23 @@ test.describe("requests", () => {
     await window.locator(".send-btn").click();
 
     await expect(window.locator(".response-editor")).toContainText("Hello from test server", { timeout: 10_000 });
+  });
+
+  test("error response shows the gRPC status code", async ({ app, window }) => {
+    await seedCollection(window, UNARY_COLLECTION);
+
+    await app.evaluate(({ ipcMain }) => {
+      ipcMain.removeHandler("grpc:send-request");
+      ipcMain.handle("grpc:send-request", () =>
+        Promise.resolve({ ok: false, error: "no such entity", code: 5, codeName: "NOT_FOUND" })
+      );
+    });
+
+    await window.locator(".method").first().click();
+    await window.locator(".send-btn").click();
+
+    await expect(window.locator(".response-error")).toContainText("no such entity");
+    await expect(window.locator(".status-code--error")).toHaveText("5 NOT_FOUND");
   });
 
   test("cancel in-flight request → shows 'Request cancelled.'", async ({ app, window }) => {

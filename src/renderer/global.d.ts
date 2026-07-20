@@ -54,11 +54,23 @@ export type ReflectProgress =
   | { url: string; stage: "listing" }
   | { url: string; stage: "fetching"; servicesFound: number; filesFetched: number; pending: number };
 
+export interface SendResult {
+  ok: boolean;
+  /** Deserialized response message (unary) or array of messages (streaming). Present when ok. */
+  payload?: unknown;
+  /** Error message. Present when !ok. */
+  error?: string;
+  /** gRPC status code (0 = OK). null when the call never started (e.g. an encode error). */
+  code: number | null;
+  /** Human-readable status name, e.g. "OK", "NOT_FOUND". null when code is null. */
+  codeName: string | null;
+}
+
 declare global {
   interface Window {
     grpcui: {
       connectServer: (url: string) => Promise<Collection>;
-      sendRequest: (args: SendRequestArgs, requestId: string) => Promise<unknown>;
+      sendRequest: (args: SendRequestArgs, requestId: string) => Promise<SendResult>;
       cancelRequest: (requestId: string) => void;
       onReflectProgress: (cb: (progress: ReflectProgress) => void) => () => void;
       onStreamData: (cb: (payload: { requestId: string; data: unknown }) => void) => () => void;

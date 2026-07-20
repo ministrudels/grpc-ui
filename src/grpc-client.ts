@@ -71,6 +71,28 @@ export interface SendRequestArgs {
   serverStreaming?: boolean;
 }
 
+/**
+ * Outcome of a gRPC call. Always resolved (never rejected) so the gRPC status
+ * code survives the Electron IPC boundary — thrown errors are serialized to a
+ * bare message and would drop the code.
+ */
+export interface SendResult {
+  ok: boolean;
+  /** Deserialized response message (unary) or array of messages (streaming). Present when ok. */
+  payload?: unknown;
+  /** Error message. Present when !ok. */
+  error?: string;
+  /** gRPC status code (0 = OK). null when the call never started (e.g. an encode error). */
+  code: number | null;
+  /** Human-readable status name, e.g. "OK", "NOT_FOUND". null when code is null. */
+  codeName: string | null;
+}
+
+/** Map a numeric gRPC status code to its name, e.g. 5 → "NOT_FOUND". */
+function statusName(code: number): string {
+  return grpc.status[code] ?? String(code);
+}
+
 // ── Reflection client constructors ───────────────────────────────────────────
 
 function makeReflectionClientCtor(protoFile: string, pkg: string) {
@@ -353,7 +375,21 @@ export async function sendRequest(
   args: SendRequestArgs,
   signal?: AbortSignal,
   onData?: (data: unknown) => void
-): Promise<unknown> {
+): Promise<SendResult> {
+  try {
+    return await runSendRequest(args, signal, onData);
+  } catch (e) {
+    // Failures before the call reaches the wire (type lookup, request encoding)
+    // carry no gRPC status code.
+    return { ok: false, error: (e as Error).message ?? "Request failed", code: null, codeName: null };
+  }
+}
+
+async function runSendRequest(
+  args: SendRequestArgs,
+  signal?: AbortSignal,
+  onData?: (data: unknown) => void
+): Promise<SendResult> {
   const { url, serviceName, methodName, requestType, responseType, requestJson, fileDescriptors, metadata } = args;
 
   // Re-encode individual FileDescriptorProtos into a FileDescriptorSet binary so
@@ -432,8 +468,10 @@ export async function sendRequest(
     }
   }
 
+  const CANCELLED = grpc.status.CANCELLED;
+
   if (args.serverStreaming) {
-    return new Promise((resolve, reject) => {
+    return new Promise<SendResult>((resolve) => {
       const results: unknown[] = [];
       // No deadline: streams live until the server closes them or the user cancels.
       // The deadline on unary calls guards initial connection; for streaming it would
@@ -452,29 +490,30 @@ export async function sendRequest(
       }
       signal?.addEventListener("abort", () => {
         call.cancel();
-        settle(() => reject(new Error("Cancelled")));
+        settle(() => resolve({ ok: false, error: "Cancelled", code: CANCELLED, codeName: statusName(CANCELLED) }));
       }, { once: true });
       call.on("data", (data: unknown) => {
         results.push(data);
         onData?.(data);
       });
       // status is the authoritative completion event in grpc-js; end fires after
-      // it but can be delayed. Resolve/reject here so the IPC handle returns as
-      // soon as the server closes the stream.
+      // it but can be delayed. Resolve here so the IPC handle returns as soon as
+      // the server closes the stream. Both success and error carry status.code.
       call.on("status", (status: grpc.StatusObject) => {
         if (status.code === grpc.status.OK) {
-          settle(() => resolve(results));
+          settle(() => resolve({ ok: true, payload: results, code: status.code, codeName: statusName(status.code) }));
         } else {
-          settle(() => reject(Object.assign(new Error(status.details), { code: status.code })));
+          settle(() => resolve({ ok: false, error: status.details, code: status.code, codeName: statusName(status.code) }));
         }
       });
       call.on("error", (err: Error) => {
-        settle(() => reject(err));
+        const code = (err as { code?: number }).code ?? null;
+        settle(() => resolve({ ok: false, error: err.message, code, codeName: code != null ? statusName(code) : null }));
       });
     });
   }
 
-  return new Promise((resolve, reject) => {
+  return new Promise<SendResult>((resolve) => {
     const call = client.makeUnaryRequest(
       `/${serviceName}/${methodName}`,
       (req: Buffer) => req,
@@ -484,14 +523,18 @@ export async function sendRequest(
       { deadline },
       (err, response) => {
         closeOnce();
-        if (err) reject(err);
-        else resolve(response);
+        if (err) {
+          const code = (err as { code?: number }).code ?? null;
+          resolve({ ok: false, error: err.message, code, codeName: code != null ? statusName(code) : null });
+        } else {
+          resolve({ ok: true, payload: response, code: grpc.status.OK, codeName: statusName(grpc.status.OK) });
+        }
       }
     );
     signal?.addEventListener("abort", () => {
       call.cancel();
       closeOnce();
-      reject(new Error("Cancelled"));
+      resolve({ ok: false, error: "Cancelled", code: CANCELLED, codeName: statusName(CANCELLED) });
     }, { once: true });
   });
 }

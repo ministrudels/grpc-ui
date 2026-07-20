@@ -18,6 +18,21 @@
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
+.status-code {
+  font-size: 10px;
+  line-height: 1;
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid currentColor;
+  letter-spacing: 0.03em;
+  font-weight: 600;
+}
+.status-code--ok {
+  color: var(--status-success);
+}
+.status-code--error {
+  color: var(--status-error);
+}
 .copy-btn {
   margin-left: auto;
   background: none;
