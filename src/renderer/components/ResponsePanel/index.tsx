@@ -9,6 +9,8 @@ interface Props {
   streamTimestamps: number[];
   error: string | null;
   errorTs: number | null;
+  statusCode: number | null;
+  statusName: string | null;
   loading: boolean;
   monacoTheme: string;
 }
@@ -30,10 +32,30 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
-function ResponseHeader({ copyText, streaming }: { copyText?: string; streaming?: boolean }) {
+function StatusBadge({ code, name }: { code: number; name: string | null }) {
+  const ok = code === 0;
+  return (
+    <span className={`status-code${ok ? " status-code--ok" : " status-code--error"}`}>
+      {code}{name ? ` ${name}` : ""}
+    </span>
+  );
+}
+
+function ResponseHeader({
+  copyText,
+  streaming,
+  statusCode,
+  statusName
+}: {
+  copyText?: string;
+  streaming?: boolean;
+  statusCode?: number | null;
+  statusName?: string | null;
+}) {
   return (
     <div className="response-label">
       <span>{streaming ? "Streaming…" : "Response"}</span>
+      {statusCode != null && <StatusBadge code={statusCode} name={statusName ?? null} />}
       {copyText && <CopyButton text={copyText} />}
     </div>
   );
@@ -77,7 +99,7 @@ function StreamMessage({ msg, ts }: { msg: unknown; ts?: number }) {
   );
 }
 
-export default function ResponsePanel({ tabId, response, streamTimestamps, error, errorTs, loading, monacoTheme }: Props) {
+export default function ResponsePanel({ tabId, response, streamTimestamps, error, errorTs, statusCode, statusName, loading, monacoTheme }: Props) {
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const streamRef = useRef<HTMLDivElement | null>(null);
 
@@ -171,7 +193,12 @@ export default function ResponsePanel({ tabId, response, streamTimestamps, error
 
   return (
     <div className="response-panel">
-      <ResponseHeader copyText={copyText} streaming={streaming} />
+      <ResponseHeader
+        copyText={copyText}
+        streaming={streaming}
+        statusCode={loading ? null : statusCode}
+        statusName={statusName}
+      />
       <div className={isMonaco ? "response-editor" : "response-body"}>
         {content}
       </div>

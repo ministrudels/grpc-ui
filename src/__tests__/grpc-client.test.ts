@@ -148,7 +148,8 @@ describe("against a server with custom enum value options", () => {
       fileDescriptors: collection.fileDescriptors,
     });
 
-    expect(response).toMatchObject({ status: expect.any(Number) });
+    expect(response.ok).toBe(true);
+    expect(response.payload).toMatchObject({ status: expect.any(Number) });
   });
 });
 
@@ -271,24 +272,29 @@ describe("end-to-end: discover services then invoke a method", () => {
       fileDescriptors: collection.fileDescriptors,
     });
 
-    expect(response).toEqual({ message: "Hello World" });
+    expect(response.ok).toBe(true);
+    expect(response.payload).toEqual({ message: "Hello World" });
+    expect(response.code).toBe(0);
+    expect(response.codeName).toBe("OK");
   });
 
-  it("rejects with a gRPC error for invalid method path", async () => {
+  it("returns a gRPC error result for an invalid method path", async () => {
     const url = `localhost:${port}`;
     const collection = await discoverServices(url);
 
-    await expect(
-      sendRequest({
-        url,
-        serviceName: "helloworld.Greeter",
-        methodName: "NonExistent",
-        requestType: "helloworld.HelloRequest",
-        responseType: "helloworld.HelloReply",
-        requestJson: JSON.stringify({ name: "World" }),
-        fileDescriptors: collection.fileDescriptors,
-      }),
-    ).rejects.toThrow();
+    const response = await sendRequest({
+      url,
+      serviceName: "helloworld.Greeter",
+      methodName: "NonExistent",
+      requestType: "helloworld.HelloRequest",
+      responseType: "helloworld.HelloReply",
+      requestJson: JSON.stringify({ name: "World" }),
+      fileDescriptors: collection.fileDescriptors,
+    });
+
+    expect(response.ok).toBe(false);
+    expect(response.code).toBeTypeOf("number");
+    expect(response.codeName).toBeTypeOf("string");
   });
 
   it("propagates gRPC status errors to the caller", async () => {
@@ -308,7 +314,8 @@ describe("end-to-end: discover services then invoke a method", () => {
     });
 
     // Empty name → "Hello "
-    expect(response).toEqual({ message: "Hello " });
+    expect(response.ok).toBe(true);
+    expect(response.payload).toEqual({ message: "Hello " });
   });
 });
 
@@ -379,7 +386,7 @@ describe("reflection: cross-file type dependencies", () => {
       fileDescriptors: collection.fileDescriptors,
     });
 
-    expect(response).toMatchObject({ data: "report" });
+    expect(response.payload).toMatchObject({ data: "report" });
   });
 });
 
@@ -448,6 +455,6 @@ describe("reflection: transitive dependencies (3-level import chain)", () => {
       fileDescriptors: collection.fileDescriptors,
     });
 
-    expect(response).toMatchObject({ data: { leaf: { value: "hello" } } });
+    expect(response.payload).toMatchObject({ data: { leaf: { value: "hello" } } });
   });
 });
