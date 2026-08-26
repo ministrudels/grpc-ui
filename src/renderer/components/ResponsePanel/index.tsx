@@ -1,6 +1,7 @@
 import Editor, { type OnMount, useMonaco } from "@monaco-editor/react";
 import { useEffect, useRef, useState } from "react";
 import type * as monaco from "monaco-editor";
+import CopyButton from "../CopyButton";
 import "./styles.css";
 
 interface Props {
@@ -13,23 +14,6 @@ interface Props {
   statusName: string | null;
   loading: boolean;
   monacoTheme: string;
-}
-
-function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
-  return (
-    <button
-      className={`copy-btn${copied ? " copied" : ""}`}
-      onClick={() => {
-        navigator.clipboard.writeText(text).then(() => {
-          setCopied(true);
-          setTimeout(() => setCopied(false), 1500);
-        });
-      }}
-    >
-      {copied ? "Copied!" : "Copy"}
-    </button>
-  );
 }
 
 function StatusBadge({ code, name }: { code: number; name: string | null }) {

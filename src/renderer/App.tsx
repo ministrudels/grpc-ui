@@ -7,8 +7,10 @@ import MetadataEditor, { type MetadataRow } from "./components/MetadataEditor";
 import ResponsePanel from "./components/ResponsePanel";
 import Snackbar from "./components/Snackbar";
 import Settings from "./components/Settings";
+import CopyButton from "./components/CopyButton";
 import type { GrpcMethod, GrpcService, NamedCollection } from "./global";
 import { skeletonFromMessage } from "./proto";
+import { buildGrpcurlCommand } from "./grpcurl";
 import type { OnSelectMethod } from "./components/Sidebar";
 import { useGrpcRequest } from "./hooks/useGrpcRequest";
 import "./app.css";
@@ -326,6 +328,16 @@ export default function App() {
                       <span className="editor-tab-badge">{activeTab.metadata.filter((r) => r.key.trim()).length}</span>
                     )}
                   </button>
+                  <CopyButton
+                    text={buildGrpcurlCommand({
+                      targetUrl: activeTab.targetUrl,
+                      serviceName: activeTab.service.name,
+                      methodName: activeTab.method.name,
+                      requestBody: activeTab.requestBody,
+                      metadata: activeTab.metadata
+                    })}
+                    label="Copy as grpcurl"
+                  />
                 </div>
                 {activeTab.editorTab === "request" ? (
                   <RequestBody
