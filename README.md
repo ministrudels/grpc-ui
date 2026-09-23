@@ -51,6 +51,44 @@ chmod +x gRPC-UI-<version>.AppImage
 sudo dpkg -i grpc-ui_<version>_amd64.deb
 ```
 
+## Upgrade
+
+### macOS (Homebrew)
+
+```sh
+brew update && brew upgrade --cask grpc-ui
+```
+
+### macOS upgrade (direct download)
+
+Download the latest `.dmg` from the [latest release](https://github.com/ministrudels/grpc-ui/releases/latest) and drag it onto **Applications**, replacing the existing app.
+
+### Windows upgrade
+
+Download the latest `gRPC-UI-Setup-<version>.exe` from the [latest release](https://github.com/ministrudels/grpc-ui/releases/latest) and run it — it installs over your existing version.
+
+### Linux upgrade
+
+**AppImage:**
+
+```sh
+curl -fsSL https://api.github.com/repos/ministrudels/grpc-ui/releases/latest \
+  | grep -o '"browser_download_url": *"[^"]*\.AppImage"' \
+  | cut -d '"' -f4 \
+  | xargs -I{} curl -fsSL -o gRPC-UI.AppImage {} \
+  && chmod +x gRPC-UI.AppImage
+```
+
+**Debian / Ubuntu:**
+
+```sh
+curl -fsSL https://api.github.com/repos/ministrudels/grpc-ui/releases/latest \
+  | grep -o '"browser_download_url": *"[^"]*\.deb"' \
+  | cut -d '"' -f4 \
+  | xargs -I{} curl -fsSL -o grpc-ui.deb {} \
+  && sudo dpkg -i grpc-ui.deb
+```
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
