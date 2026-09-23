@@ -356,6 +356,7 @@ export default function App() {
                       metadata: activeTab.metadata
                     })}
                     label="Copy as grpcurl"
+                    tooltip="Copy this request as a grpcurl command"
                     className="copy-btn-overlay"
                   />
                 </div>

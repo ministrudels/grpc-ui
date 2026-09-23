@@ -183,7 +183,14 @@ export default function ResponsePanel({ tabId, response, streamTimestamps, error
         <div className={isMonaco ? "response-editor" : "response-body"}>
           {content}
         </div>
-        {copyText && <CopyButton text={copyText} label="Copy response" className="copy-btn-overlay" />}
+        {copyText && (
+          <CopyButton
+            text={copyText}
+            label="Copy response"
+            tooltip="Copy the response JSON to clipboard"
+            className="copy-btn-overlay"
+          />
+        )}
       </div>
     </div>
   );
