@@ -11,14 +11,16 @@ interface Props {
  * server URL, then calls onConfirm. Closes on Escape, backdrop click, or
  * Cancel. Submits on Enter or the Connect button.
  */
+const NAME_PLACEHOLDER = "My Service";
+const URL_PLACEHOLDER = "localhost:50051";
+
 export default function AddCollectionDialog({ onClose, onConfirm }: Props) {
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
 
   function handleConfirm() {
-    const trimmedName = name.trim();
-    const trimmedUrl = url.trim();
-    if (!trimmedName || !trimmedUrl) return;
+    const trimmedName = name.trim() || NAME_PLACEHOLDER;
+    const trimmedUrl = url.trim() || URL_PLACEHOLDER;
     onConfirm(trimmedName, trimmedUrl);
     onClose();
   }
@@ -42,7 +44,7 @@ export default function AddCollectionDialog({ onClose, onConfirm }: Props) {
           <label className="dialog-field-label">Name</label>
           <input
             className="dialog-input"
-            placeholder="My Service"
+            placeholder={NAME_PLACEHOLDER}
             value={name}
             autoFocus
             onChange={(e) => setName(e.target.value)}
@@ -54,7 +56,7 @@ export default function AddCollectionDialog({ onClose, onConfirm }: Props) {
           <label className="dialog-field-label">Server URL</label>
           <input
             className="dialog-input"
-            placeholder="localhost:50051"
+            placeholder={URL_PLACEHOLDER}
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={handleKeyDown}
