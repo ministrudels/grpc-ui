@@ -25,18 +25,19 @@
 }
 .app-panels {
   flex: 1;
-  display: flex;
-  min-height: 0;
-}
-.app-left-panel {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 32px 1fr;
   min-width: 0;
   min-height: 0;
 }
+/* Lets editor-tabs and the request content participate directly as grid items of .app-panels */
+.app-left-panel {
+  display: contents;
+}
 .app-placeholder {
-  flex: 1;
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -45,10 +46,12 @@
 }
 
 .editor-tabs {
+  grid-column: 1;
+  grid-row: 1;
   display: flex;
   align-items: stretch;
+  min-width: 0;
   border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
 }
 .editor-tab {
   background: none;
@@ -76,4 +79,15 @@
   padding: 0 4px;
   border-radius: 8px;
   line-height: 1.6;
+}
+/* position:relative so the floating .copy-btn-overlay anchors here rather
+   than to the scrollable editor/body below, keeping it pinned on scroll. */
+.request-panel-body {
+  grid-column: 1;
+  grid-row: 2;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
 }

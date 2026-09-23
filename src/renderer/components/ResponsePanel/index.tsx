@@ -1,6 +1,7 @@
 import Editor, { type OnMount, useMonaco } from "@monaco-editor/react";
 import { useEffect, useRef, useState } from "react";
 import type * as monaco from "monaco-editor";
+import CopyButton from "../CopyButton";
 import "./styles.css";
 
 interface Props {
@@ -15,23 +16,6 @@ interface Props {
   monacoTheme: string;
 }
 
-function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
-  return (
-    <button
-      className={`copy-btn${copied ? " copied" : ""}`}
-      onClick={() => {
-        navigator.clipboard.writeText(text).then(() => {
-          setCopied(true);
-          setTimeout(() => setCopied(false), 1500);
-        });
-      }}
-    >
-      {copied ? "Copied!" : "Copy"}
-    </button>
-  );
-}
-
 function StatusBadge({ code, name }: { code: number; name: string | null }) {
   const ok = code === 0;
   return (
@@ -42,12 +26,10 @@ function StatusBadge({ code, name }: { code: number; name: string | null }) {
 }
 
 function ResponseHeader({
-  copyText,
   streaming,
   statusCode,
   statusName
 }: {
-  copyText?: string;
   streaming?: boolean;
   statusCode?: number | null;
   statusName?: string | null;
@@ -56,7 +38,6 @@ function ResponseHeader({
     <div className="response-label">
       <span>{streaming ? "Streaming…" : "Response"}</span>
       {statusCode != null && <StatusBadge code={statusCode} name={statusName ?? null} />}
-      {copyText && <CopyButton text={copyText} />}
     </div>
   );
 }
@@ -194,13 +175,15 @@ export default function ResponsePanel({ tabId, response, streamTimestamps, error
   return (
     <div className="response-panel">
       <ResponseHeader
-        copyText={copyText}
         streaming={streaming}
         statusCode={loading ? null : statusCode}
         statusName={statusName}
       />
-      <div className={isMonaco ? "response-editor" : "response-body"}>
-        {content}
+      <div className="response-panel-body">
+        <div className={isMonaco ? "response-editor" : "response-body"}>
+          {content}
+        </div>
+        {copyText && <CopyButton text={copyText} label="Copy response" className="copy-btn-overlay" />}
       </div>
     </div>
   );

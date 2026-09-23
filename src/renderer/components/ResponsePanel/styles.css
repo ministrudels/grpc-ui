@@ -1,12 +1,10 @@
+/* Lets response-label and the response content participate directly as grid items of .app-panels */
 .response-panel {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
+  display: contents;
 }
-/* Height must match .editor-tabs so the border lines up seamlessly */
 .response-label {
+  grid-column: 2;
+  grid-row: 1;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -16,7 +14,6 @@
   letter-spacing: 0.05em;
   padding: 6px 12px;
   border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
 }
 .status-code {
   font-size: 10px;
@@ -33,32 +30,23 @@
 .status-code--error {
   color: var(--status-error);
 }
-.copy-btn {
-  margin-left: auto;
-  background: none;
-  border: 1px solid var(--bg-element-hover);
-  border-radius: 3px;
-  color: var(--text-secondary);
-  font-size: 10px;
-  line-height: 1;
-  padding: 1px 7px;
-  cursor: pointer;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  transition: color 0.1s, border-color 0.1s;
-}
-.copy-btn:hover {
-  color: var(--text-service);
-  border-color: var(--border-raised);
-}
-.copy-btn.copied {
-  color: var(--status-success);
-  border-color: var(--status-success);
+/* position:relative so the floating .copy-btn-overlay anchors here rather
+   than to the scrollable body/editor below, keeping it pinned on scroll. */
+.response-panel-body {
+  grid-column: 2;
+  grid-row: 2;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border-left: 1px solid var(--border);
 }
 .response-body {
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-width: 0;
   min-height: 0;
   padding: 12px;
   overflow-y: auto;
@@ -67,7 +55,6 @@
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
-  border-left: 1px solid var(--border);
 }
 
 .response-loading { color: var(--status-sending); }
@@ -131,6 +118,6 @@
 .response-editor {
   flex: 1;
   overflow: hidden;
+  min-width: 0;
   min-height: 0;
-  border-left: 1px solid var(--border);
 }

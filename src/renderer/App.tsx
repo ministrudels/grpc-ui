@@ -7,8 +7,10 @@ import MetadataEditor, { type MetadataRow } from "./components/MetadataEditor";
 import ResponsePanel from "./components/ResponsePanel";
 import Snackbar from "./components/Snackbar";
 import Settings from "./components/Settings";
+import CopyButton from "./components/CopyButton";
 import type { GrpcMethod, GrpcService, NamedCollection } from "./global";
 import { skeletonFromMessage } from "./proto";
+import { buildGrpcurlCommand } from "./grpcurl";
 import type { OnSelectMethod } from "./components/Sidebar";
 import { useGrpcRequest } from "./hooks/useGrpcRequest";
 import { isMacPlatform } from "../shortcuts";
@@ -330,20 +332,33 @@ export default function App() {
                     )}
                   </button>
                 </div>
-                {activeTab.editorTab === "request" ? (
-                  <RequestBody
-                    value={activeTab.requestBody}
-                    onChange={(v) => updateTab(activeTab.id, { requestBody: v })}
-                    requestType={activeTab.method.requestType}
-                    messages={collections.find((c) => c.url === activeTab.collectionUrl)?.messages}
-                    monacoTheme={monacoTheme}
+                <div className="request-panel-body">
+                  {activeTab.editorTab === "request" ? (
+                    <RequestBody
+                      value={activeTab.requestBody}
+                      onChange={(v) => updateTab(activeTab.id, { requestBody: v })}
+                      requestType={activeTab.method.requestType}
+                      messages={collections.find((c) => c.url === activeTab.collectionUrl)?.messages}
+                      monacoTheme={monacoTheme}
+                    />
+                  ) : (
+                    <MetadataEditor
+                      rows={activeTab.metadata}
+                      onChange={(rows) => updateTab(activeTab.id, { metadata: rows })}
+                    />
+                  )}
+                  <CopyButton
+                    text={buildGrpcurlCommand({
+                      targetUrl: activeTab.targetUrl,
+                      serviceName: activeTab.service.name,
+                      methodName: activeTab.method.name,
+                      requestBody: activeTab.requestBody,
+                      metadata: activeTab.metadata
+                    })}
+                    label="Copy as grpcurl"
+                    className="copy-btn-overlay"
                   />
-                ) : (
-                  <MetadataEditor
-                    rows={activeTab.metadata}
-                    onChange={(rows) => updateTab(activeTab.id, { metadata: rows })}
-                  />
-                )}
+                </div>
               </div>
               <ResponsePanel
                 tabId={activeTab.id}
