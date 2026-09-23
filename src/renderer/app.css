@@ -27,7 +27,9 @@
   flex: 1;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto 1fr;
+  /* Fixed (not auto) so the header row doesn't resize as the status badge/copy
+     button in .response-label appear and disappear across request states. */
+  grid-template-rows: 32px 1fr;
   min-width: 0;
   min-height: 0;
 }
