@@ -118,8 +118,7 @@ jobs:
             version "VERSION_PLACEHOLDER"
             sha256 "SHA256_PLACEHOLDER"
 
-            url "https://github.com/ministrudels/grpc-ui/releases/download/v#{version}/gRPC-UI-#{version}-arm64.dmg",
-                verified: "github.com/ministrudels/grpc-ui/"
+            url "https://github.com/ministrudels/grpc-ui/releases/download/v#{version}/gRPC-UI-#{version}-arm64.dmg"
 
             name "gRPC UI"
             desc "Desktop gRPC client — like Insomnia/Postman for gRPC"
