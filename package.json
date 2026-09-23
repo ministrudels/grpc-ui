@@ -33,6 +33,7 @@
     "@monaco-editor/react": "^4.7.0",
     "@tanstack/react-query": "^5.96.1",
     "electron-updater": "^6.8.3",
+    "lucide-react": "^1.47.0",
     "protobufjs": "^8.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

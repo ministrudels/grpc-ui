@@ -30,9 +30,20 @@
 .status-code--error {
   color: var(--status-error);
 }
-.response-body {
+/* position:relative so the floating .copy-btn-overlay anchors here rather
+   than to the scrollable body/editor below, keeping it pinned on scroll. */
+.response-panel-body {
   grid-column: 2;
   grid-row: 2;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border-left: 1px solid var(--border);
+}
+.response-body {
+  flex: 1;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -44,7 +55,6 @@
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
-  border-left: 1px solid var(--border);
 }
 
 .response-loading { color: var(--status-sending); }
@@ -106,10 +116,8 @@
   color: var(--text-primary);
 }
 .response-editor {
-  grid-column: 2;
-  grid-row: 2;
+  flex: 1;
   overflow: hidden;
   min-width: 0;
   min-height: 0;
-  border-left: 1px solid var(--border);
 }

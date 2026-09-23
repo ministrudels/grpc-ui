@@ -27,8 +27,6 @@
   flex: 1;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  /* Fixed (not auto) so the header row doesn't resize as the status badge/copy
-     button in .response-label appear and disappear across request states. */
   grid-template-rows: 32px 1fr;
   min-width: 0;
   min-height: 0;
@@ -81,4 +79,15 @@
   padding: 0 4px;
   border-radius: 8px;
   line-height: 1.6;
+}
+/* position:relative so the floating .copy-btn-overlay anchors here rather
+   than to the scrollable editor/body below, keeping it pinned on scroll. */
+.request-panel-body {
+  grid-column: 1;
+  grid-row: 2;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
 }

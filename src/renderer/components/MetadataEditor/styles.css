@@ -1,6 +1,5 @@
 .metadata-editor {
-  grid-column: 1;
-  grid-row: 2;
+  flex: 1;
   display: flex;
   flex-direction: column;
   padding: 8px 0;

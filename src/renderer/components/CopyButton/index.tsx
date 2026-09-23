@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Copy, Check } from "lucide-react";
 import "./styles.css";
 
 interface Props {
@@ -12,14 +13,14 @@ export default function CopyButton({ text, label = "Copy", className }: Props) {
   return (
     <button
       className={`copy-btn${copied ? " copied" : ""}${className ? ` ${className}` : ""}`}
-      onClick={() => {
-        navigator.clipboard.writeText(text).then(() => {
-          setCopied(true);
-          setTimeout(() => setCopied(false), 1500);
-        });
+      aria-label={copied ? "Copied" : label}
+      onClick={async () => {
+        await navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 3000);
       }}
     >
-      {copied ? "Copied!" : label}
+      {copied ? <Check size={13} /> : <Copy size={13} />}
     </button>
   );
 }

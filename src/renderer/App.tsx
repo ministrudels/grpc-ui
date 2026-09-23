@@ -331,6 +331,22 @@ export default function App() {
                       <span className="editor-tab-badge">{activeTab.metadata.filter((r) => r.key.trim()).length}</span>
                     )}
                   </button>
+                </div>
+                <div className="request-panel-body">
+                  {activeTab.editorTab === "request" ? (
+                    <RequestBody
+                      value={activeTab.requestBody}
+                      onChange={(v) => updateTab(activeTab.id, { requestBody: v })}
+                      requestType={activeTab.method.requestType}
+                      messages={collections.find((c) => c.url === activeTab.collectionUrl)?.messages}
+                      monacoTheme={monacoTheme}
+                    />
+                  ) : (
+                    <MetadataEditor
+                      rows={activeTab.metadata}
+                      onChange={(rows) => updateTab(activeTab.id, { metadata: rows })}
+                    />
+                  )}
                   <CopyButton
                     text={buildGrpcurlCommand({
                       targetUrl: activeTab.targetUrl,
@@ -340,22 +356,9 @@ export default function App() {
                       metadata: activeTab.metadata
                     })}
                     label="Copy as grpcurl"
+                    className="copy-btn-overlay"
                   />
                 </div>
-                {activeTab.editorTab === "request" ? (
-                  <RequestBody
-                    value={activeTab.requestBody}
-                    onChange={(v) => updateTab(activeTab.id, { requestBody: v })}
-                    requestType={activeTab.method.requestType}
-                    messages={collections.find((c) => c.url === activeTab.collectionUrl)?.messages}
-                    monacoTheme={monacoTheme}
-                  />
-                ) : (
-                  <MetadataEditor
-                    rows={activeTab.metadata}
-                    onChange={(rows) => updateTab(activeTab.id, { metadata: rows })}
-                  />
-                )}
               </div>
               <ResponsePanel
                 tabId={activeTab.id}

@@ -26,12 +26,10 @@ function StatusBadge({ code, name }: { code: number; name: string | null }) {
 }
 
 function ResponseHeader({
-  copyText,
   streaming,
   statusCode,
   statusName
 }: {
-  copyText?: string;
   streaming?: boolean;
   statusCode?: number | null;
   statusName?: string | null;
@@ -40,7 +38,6 @@ function ResponseHeader({
     <div className="response-label">
       <span>{streaming ? "Streaming…" : "Response"}</span>
       {statusCode != null && <StatusBadge code={statusCode} name={statusName ?? null} />}
-      {copyText && <CopyButton text={copyText} />}
     </div>
   );
 }
@@ -178,13 +175,15 @@ export default function ResponsePanel({ tabId, response, streamTimestamps, error
   return (
     <div className="response-panel">
       <ResponseHeader
-        copyText={copyText}
         streaming={streaming}
         statusCode={loading ? null : statusCode}
         statusName={statusName}
       />
-      <div className={isMonaco ? "response-editor" : "response-body"}>
-        {content}
+      <div className="response-panel-body">
+        <div className={isMonaco ? "response-editor" : "response-body"}>
+          {content}
+        </div>
+        {copyText && <CopyButton text={copyText} label="Copy response" className="copy-btn-overlay" />}
       </div>
     </div>
   );
